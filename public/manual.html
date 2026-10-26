@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPF Compliance Portal - User Manual</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ccff;
+            --primary-dark: #0099cc;
+            --bg-dark: #0a0e1a;
+            --bg-card: #141b2d;
+            --text-light: #ffffff;
+            --text-muted: #9ca3af;
+            --text-dark: #1f2937;
+            --text-gray: #4b5563;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: #f9fafb;
+        }
+
+        /* Cover Page */
+        .cover-page {
+            height: 100vh;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            page-break-after: always;
+        }
+
+        .cover-logo {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            letter-spacing: 2px;
+        }
+
+        .cover-title {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+        }
+
+        .cover-subtitle {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            margin-bottom: 4rem;
+        }
+
+        .cover-footer {
+            position: absolute;
+            bottom: 2rem;
+            font-size: 1rem;
+            color: var(--text-muted);
+        }
+
+        /* Content Pages */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            min-height: 100vh;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 2rem;
+        }
+
+        .header-title {
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        h1 { font-size: 2.5rem; margin-bottom: 1.5rem; color: var(--text-dark); }
+        h2 { font-size: 2rem; margin-top: 3rem; margin-bottom: 1rem; color: var(--primary-dark); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        h3 { font-size: 1.5rem; margin-top: 2rem; margin-bottom: 1rem; color: var(--text-dark); }
+        
+        p { margin-bottom: 1rem; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+        li { margin-bottom: 0.5rem; }
+        strong { color: #111827; }
+
+        /* Table of Contents */
+        .toc {
+            background-color: #f3f4f6;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 3rem;
+            page-break-after: always;
+        }
+        .toc h2 { border: none; margin-top: 0; }
+        .toc ul { list-style-type: none; padding-left: 0; }
+        .toc li { margin-bottom: 0.75rem; }
+        .toc a { color: var(--primary-dark); text-decoration: none; font-weight: 500; font-size: 1.1rem; }
+        .toc a:hover { text-decoration: underline; }
+        .toc ul ul { padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0; }
+        .toc ul ul a { font-size: 1rem; color: var(--text-gray); }
+
+        /* Screenshots */
+        .screenshot-img {
+            width: 100%;
+            height: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin: 2rem 0;
+            display: block;
+        }
+
+        /* Callouts */
+        .callout {
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+        .callout.info { background-color: #eff6ff; border-color: #3b82f6; }
+        .callout.warning { background-color: #fffbeb; border-color: var(--warning); }
+        .callout.success { background-color: #ecfdf5; border-color: var(--success); }
+        .callout.danger { background-color: #fef2f2; border-color: var(--danger); }
+        .callout h4 { margin-bottom: 0.5rem; font-size: 1.1rem; }
+
+        /* Status Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .badge-current { background-color: #d1fae5; color: #065f46; }
+        .badge-refresh { background-color: #fef3c7; color: #92400e; }
+        .badge-requires { background-color: #fee2e2; color: #991b1b; }
+        .badge-outdated { background-color: #fee2e2; color: #991b1b; }
+        .badge-norecord { background-color: #f3f4f6; color: #4b5563; }
+
+        /* Print Styles */
+        @media print {
+            body { background-color: #fff; }
+            .container { box-shadow: none; padding: 0; max-width: 100%; }
+            .section { page-break-before: always; }
+            .toc { page-break-after: always; background-color: #fff; border: 1px solid var(--border); }
+            a { text-decoration: none; color: inherit; }
+            /* Hide print button if we add one */
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cover Page -->
+    <div class="cover-page no-print">
+        <div class="cover-logo">MJ HYGIENE</div>
+        <h1 class="cover-title">RPF Compliance Portal</h1>
+        <div class="cover-subtitle">User & Administrator Manual</div>
+        <div class="cover-footer">Last Updated: May 2026 | Portal URL: https://rpfhygiene.com</div>
+    </div>
+
+    <!-- Container for Content -->
+    <div class="container">
+        <div class="header no-print">
+            <div class="header-title">RPF Compliance Portal Manual</div>
+            <div>https://rpfhygiene.com</div>
+        </div>
+
+        <div class="no-print" style="text-align: right; margin-bottom: 2rem;">
+            <button onclick="window.print()" style="padding: 10px 20px; background: var(--primary-dark); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold;">🖨️ Print to PDF</button>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="toc section">
+            <h2>Table of Contents</h2>
+            <ul>
+                <li><a href="#getting-started">1. Getting Started</a>
+                    <ul>
+                        <li><a href="#login">1.1 Login Page</a></li>
+                        <li><a href="#dashboard">1.2 Dashboard</a></li>
+                    </ul>
+                </li>
+                <li><a href="#training-documents">2. Training & Documents</a>
+                    <ul>
+                        <li><a href="#documents">2.1 Documents Page</a></li>
+                        <li><a href="#staff">2.2 Staff & Training</a></li>
+                        <li><a href="#matrix">2.3 Training Matrix</a></li>
+                        <li><a href="#wms-lookup">2.4 WMS Training Lookup (Admin)</a></li>
+                    </ul>
+                </li>
+                <li><a href="#operations">3. Operations & Compliance</a>
+                    <ul>
+                        <li><a href="#sanitation">3.1 Sanitation Schedule</a></li>
+                        <li><a href="#forms">3.2 Inspections / Forms</a></li>
+                        <li><a href="#handover">3.3 Handover Reports</a></li>
+                        <li><a href="#pre-op">3.4 Pre-Op Reports</a></li>
+                    </ul>
+                </li>
+                <li><a href="#administration">4. Administration</a>
+                    <ul>
+                        <li><a href="#user-management">4.1 User Management</a></li>
+                        <li><a href="#email-settings">4.2 Email Settings</a></li>
+                        <li><a href="#data-sync">4.3 Data Sync</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Section 1 -->
+        <div class="section" id="getting-started">
+            <h1>1. Getting Started</h1>
+            
+            <h2 id="login">1.1 Login Page</h2>
+            <p>The portal is securely restricted to authorised personnel. Navigate to <strong>https://rpfhygiene.com</strong> to access the login screen.</p>
+            
+            <img src="screenshots/login.png" alt="Login Page" class="screenshot-img">
+            
+            <p><strong>How to log in:</strong></p>
+            <ol>
+                <li>Enter your registered email address.</li>
+                <li>Enter your password.</li>
+                <li>Click <strong>Sign In</strong>.</li>
+            </ol>
+
+            <div class="callout info">
+                <h4>Role Permissions</h4>
+                <ul>
+                    <li><strong>Inspector:</strong> Basic access (documents, staff, matrix, schedule, forms, reports).</li>
+                    <li><strong>MJ Supervisor:</strong> Access to WMS Training Lookup.</li>
+                    <li><strong>MJ Admin:</strong> Full access including user management and system settings.</li>
+                </ul>
+            </div>
+
+            <h2 id="dashboard">1.2 Dashboard</h2>
+            <p>Upon logging in, you will be directed to the Dashboard. This serves as the central hub for the compliance portal.</p>
+            
+            <img src="screenshots/dashboard.png" alt="Dashboard" class="screenshot-img">
+
+            <ul>
+                <li><strong>Stats Cards:</strong> View high-level metrics such as total staff, document count, and training compliance percentage.</li>
+                <li><strong>Sync Button:</strong> Manually trigger a synchronization with the master Airtable database to ensure you are viewing the latest data.</li>
+            </ul>
+        </div>
+
+        <!-- Section 2 -->
+        <div class="section" id="training-documents">
+            <h1>2. Training & Documents</h1>
+
+            <h2 id="documents">2.1 Documents Page</h2>
+            <p>The Documents page provides a searchable master list of all RPF procedures, policies, and manuals.</p>
+
+            <img src="screenshots/documents.png" alt="Documents Page" class="screenshot-img">
+
+            <p><strong>Features:</strong></p>
+            <ul>
+                <li><strong>Search:</strong> Quickly find documents by name or Document Code (e.g., "MJ-SWP-RPF").</li>
+                <li><strong>Filters:</strong> Filter by Status (Control Document, Being Reviewed, Out of Date) or by Document Type.</li>
+                <li><strong>Card View:</strong> Documents are displayed as cards showing their version, next review date, and days left until review.</li>
+                <li><strong>View Details:</strong> Click on a document card to expand it and view associated areas, re-training frequency, and download the actual document file.</li>
+            </ul>
+
+            <h2 id="staff">2.2 Staff & Training</h2>
+            <p>This page lists all RPF team members and their individual training compliance records.</p>
+
+            <img src="screenshots/staff.png" alt="Staff Page" class="screenshot-img">
+
+            <p><strong>Features:</strong></p>
+            <ul>
+                <li><strong>Search & Filter:</strong> Find staff by name, or filter by their current employment status (Current/Terminated).</li>
+                <li><strong>Staff Cards:</strong> Displays the staff member's name, site, and overall training compliance percentage.</li>
+                <li><strong>Training Records:</strong> Click a staff card to view a list of all procedures they have been trained on.</li>
+            </ul>
+
+            <div class="callout info">
+                <h4>Training Status Badges</h4>
+                <p>Training statuses are visually colour-coded:</p>
+                <ul>
+                    <li><span class="badge badge-current">Current</span> - Training is up to date.</li>
+                    <li><span class="badge badge-refresh">Refresh Due</span> - Training expires soon (within 30 days).</li>
+                    <li><span class="badge badge-requires">Requires Training</span> - Staff member has not completed this training.</li>
+                    <li><span class="badge badge-outdated">Out of Date</span> - Training has expired.</li>
+                    <li><span class="badge badge-norecord">No Record</span> - No training record exists.</li>
+                </ul>
+            </div>
+
+            <h2 id="matrix">2.3 Training Matrix</h2>
+            <p>The Training Matrix provides a bird's-eye view of your entire workforce's compliance against all required procedures.</p>
+
+            <img src="screenshots/training-matrix.png" alt="Training Matrix" class="screenshot-img">
+
+            <p><strong>How to use the matrix:</strong></p>
+            <ul>
+                <li>The grid shows <strong>Staff Members</strong> on the left (rows) and <strong>Procedures (WMS)</strong> across the top (columns).</li>
+                <li>Each cell is colour-coded based on the staff member's status for that specific procedure (Green = Current, Red = Out of Date, Grey = No Record).</li>
+                <li>Hover over any cell to see a tooltip with exact details (dates, status).</li>
+                <li>The top row shows the overall compliance percentage for each procedure.</li>
+            </ul>
+
+            <h2 id="wms-lookup">2.4 WMS Training Lookup (Admin / Supervisor)</h2>
+            <p>This specialised tool allows Supervisors and Admins to quickly check which staff members are qualified for a specific procedure.</p>
+
+            <img src="screenshots/area-lookup.png" alt="Area Lookup" class="screenshot-img">
+
+            <p><strong>Instructions:</strong></p>
+            <ol>
+                <li>Select a <strong>WMS Procedure</strong> from the dropdown menu (e.g., "Cleaning the Fussy Cat line").</li>
+                <li>The system will display a list of <strong>all Current RPF Staff</strong>.</li>
+                <li>Staff who are currently trained will show a <span class="badge badge-current">Current</span> badge and a 📄 <strong>Cert</strong> link if a certificate is available to download.</li>
+                <li>You can filter the list to only show staff who are "Current" or those who "Require Training".</li>
+            </ol>
+
+            <div class="callout warning">
+                <h4>Protected Records</h4>
+                <p>Training records dated prior to May 2026 are protected as historical data and will not be overwritten by system syncs.</p>
+            </div>
+        </div>
+
+        <!-- Section 3 -->
+        <div class="section" id="operations">
+            <h1>3. Operations & Compliance</h1>
+
+            <h2 id="sanitation">3.1 Sanitation Schedule</h2>
+            <p>Track all routine cleaning tasks and master sanitation schedules.</p>
+
+            <img src="screenshots/sanitation.png" alt="Sanitation Schedule" class="screenshot-img">
+
+            <ul>
+                <li>View tasks grouped by Area and Department.</li>
+                <li>See cleaning frequencies (e.g., Daily, Weekly, Monthly) and specific asset requirements.</li>
+                <li>Access linked procedure documents directly from the schedule.</li>
+            </ul>
+
+            <h2 id="forms">3.2 Inspections / Forms</h2>
+            <p>Complete and manage digital inspection forms natively within the portal.</p>
+
+            <img src="screenshots/forms.png" alt="Forms" class="screenshot-img">
+
+            <ul>
+                <li><strong>Form List:</strong> View available inspection templates.</li>
+                <li><strong>Completing Forms:</strong> Fill out mobile-friendly, multi-step forms directly in your browser. No external apps required.</li>
+                <li><strong>Submissions:</strong> View past form submissions, including scores, dates, and the inspector's name.</li>
+            </ul>
+
+            <h2 id="handover">3.3 Handover Reports</h2>
+            <p>Review shift handover communications.</p>
+
+            <img src="screenshots/handover.png" alt="Handover Reports" class="screenshot-img">
+
+            <ul>
+                <li>Filter reports by date range or site.</li>
+                <li>View issues, outstanding tasks, and shift notes to ensure smooth operational transitions.</li>
+            </ul>
+
+            <h2 id="pre-op">3.4 Pre-Op Reports</h2>
+            <p>Access Pre-Operational hygiene inspection records.</p>
+
+            <img src="screenshots/pre-op.png" alt="Pre-Op Reports" class="screenshot-img">
+
+            <ul>
+                <li>Review pass/fail metrics for specific production areas before operations commence.</li>
+                <li>Track corrective actions for failed pre-op inspections.</li>
+            </ul>
+        </div>
+
+        <!-- Section 4 -->
+        <div class="section" id="administration">
+            <h1>4. Administration</h1>
+
+            <h2 id="user-management">4.1 User Management</h2>
+            <p>Available to <strong>MJ Admin</strong> users only. Manage who has access to the portal.</p>
+
+            <img src="screenshots/users.png" alt="User Management" class="screenshot-img">
+
+            <p><strong>Actions available:</strong></p>
+            <ul>
+                <li><strong>Invite User:</strong> Send an email invitation to a new staff member. Assign them a specific role (Inspector, Supervisor, Admin).</li>
+                <li><strong>Edit Roles:</strong> Change a user's permission level.</li>
+                <li><strong>Deactivate:</strong> Revoke a user's access to the portal.</li>
+            </ul>
+
+            <h2 id="email-settings">4.2 Email Settings</h2>
+            <p>Available to <strong>MJ Admin</strong> users only. Configure how the portal sends outbound emails (e.g., invitations, alerts).</p>
+
+            <img src="screenshots/email-settings.png" alt="Email Settings" class="screenshot-img">
+
+            <ul>
+                <li>Configure SMTP server details (Host, Port, Username, Password).</li>
+                <li>Send a test email to verify the configuration is working correctly.</li>
+            </ul>
+
+            <h2 id="data-sync">4.3 Data Sync</h2>
+            <p>The RPF Compliance Portal is backed by a robust synchronization engine that pulls data from legacy systems (Airtable) into a fast, reliable Supabase database.</p>
+
+            <div class="callout success">
+                <h4>Automated Background Sync</h4>
+                <p>The system automatically syncs data in the background every 30 minutes. You rarely need to trigger this manually.</p>
+            </div>
+
+            <p><strong>When to use Manual Sync:</strong></p>
+            <p>If a record was just updated in the legacy system and you need to see it in the portal <em>immediately</em>, click the <strong>Sync</strong> button on the Dashboard. This forces an instant refresh of Staff, Documents, Training, and Schedule data.</p>
+
+        </div>
+    </div>
+</body>
+</html>

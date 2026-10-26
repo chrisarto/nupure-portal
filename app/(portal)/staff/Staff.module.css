@@ -1,0 +1,126 @@
+.staffCard {
+  cursor: pointer;
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+}
+
+.staffInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.staffName {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staffEmail {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.complianceSection {
+  margin-top: 0.75rem;
+}
+
+.complianceLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border-light);
+  margin: 1rem 0 0.75rem;
+}
+
+.trainingTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.trainingList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.trainingItem {
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.trainingItem:last-child {
+  border-bottom: none;
+}
+
+.trainingName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.trainingMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.trainingDate {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.noTraining {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1rem 0 0.5rem;
+  font-style: italic;
+}
+
+.expandHint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: 0.75rem;
+  letter-spacing: 0.03em;
+}

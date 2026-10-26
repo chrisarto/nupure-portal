@@ -1,0 +1,15 @@
+.thInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.sortIcon {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+
+.sortActive {
+  color: var(--accent-primary);
+}

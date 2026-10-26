@@ -1,0 +1,6 @@
+[project]
+ref = "ttxnxytewxqccuurivsn"
+
+[functions.auth-email-hook]
+# Auth hooks are called by Supabase without a JWT — must disable JWT verification
+verify_jwt = false

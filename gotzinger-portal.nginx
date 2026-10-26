@@ -1,0 +1,41 @@
+server {
+    server_name mj-gotzinger-hygiene.com www.mj-gotzinger-hygiene.com;
+
+    # No caching for API routes
+    location /api/ {
+        proxy_pass http://localhost:3011;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_no_cache 1;
+        proxy_cache_bypass 1;
+        add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
+        add_header Pragma "no-cache";
+    }
+
+    location / {
+        proxy_pass http://localhost:3011;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection upgrade;
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 60s;
+    }
+
+    listen 443 ssl;
+    ssl_certificate /etc/letsencrypt/live/mj-gotzinger-hygiene.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/mj-gotzinger-hygiene.com/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+}
+server {
+    if ($host = www.mj-gotzinger-hygiene.com) {
+        return 301 https://$host$request_uri;
+    }
+    if ($host = mj-gotzinger-hygiene.com) {
+        return 301 https://$host$request_uri;
+    }
+    listen 80;
+    server_name mj-gotzinger-hygiene.com www.mj-gotzinger-hygiene.com;
+    return 404;
+}

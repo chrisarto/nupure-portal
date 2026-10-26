@@ -1,0 +1,105 @@
+/* ═══════════════════════════════════════════════════════════════
+   Sanitation Schedule – Collapsible Department Groups
+   ═══════════════════════════════════════════════════════════════ */
+
+.departmentGroup {
+  margin-bottom: var(--space-md);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--glass-shadow);
+  animation: fadeInUp 500ms ease-out both;
+}
+
+.departmentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  user-select: none;
+}
+
+.departmentHeader:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.departmentTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.departmentCount {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-tertiary);
+  background: var(--bg-tertiary);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.chevron {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  transition: transform var(--transition-fast);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.departmentBody {
+  animation: slideDown 300ms ease-out;
+  overflow: hidden;
+}
+
+.permitBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.permitYes {
+  background: var(--status-amber-bg);
+  color: var(--status-amber);
+  border: 1px solid var(--status-amber-border);
+}
+
+.permitNo {
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-primary);
+}
+
+.areaCell {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.taskCell {
+  color: var(--text-primary);
+}
+
+.frequencyBadge {
+  font-size: var(--text-xs);
+  padding: 2px 8px;
+  background: var(--accent-dim);
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  display: inline-block;
+}

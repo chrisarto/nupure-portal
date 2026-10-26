@@ -1,0 +1,111 @@
+.userCount {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  font-weight: 600;
+}
+
+.inviteCard {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.inviteTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+}
+
+.inviteForm {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.inviteInput, .inviteSelect {
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  min-width: 180px;
+  flex: 1;
+  min-height: 42px;
+}
+
+.inviteInput:focus, .inviteSelect:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.inviteBtn {
+  padding: 0.6rem 1.25rem;
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 42px;
+  transition: opacity 0.15s;
+}
+.inviteBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+.inviteBtn:not(:disabled):hover { opacity: 0.9; }
+
+.inviteSuccess { color: #10b981; font-size: 0.875rem; margin: 0.75rem 0 0; }
+.inviteError { color: #ef4444; font-size: 0.875rem; margin: 0.75rem 0 0; }
+
+.bannedRow { opacity: 0.55; }
+.emailCell { font-family: monospace; font-size: 0.82rem; }
+
+.roleSelect {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.statusBadge {
+  display: inline-flex;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.statusActive { background: rgba(16,185,129,0.12); color: #10b981; }
+.statusBanned { background: rgba(239,68,68,0.12); color: #ef4444; }
+
+.actionsCell { display: flex; gap: 0.4rem; align-items: center; }
+
+.actionBtn {
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.actionBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.actionBan { background: rgba(245,158,11,0.1); color: #b45309; border-color: rgba(245,158,11,0.3); }
+.actionBan:not(:disabled):hover { background: rgba(245,158,11,0.2); }
+.actionUnban { background: rgba(16,185,129,0.1); color: #065f46; border-color: rgba(16,185,129,0.3); }
+.actionUnban:not(:disabled):hover { background: rgba(16,185,129,0.2); }
+.actionDelete { background: rgba(239,68,68,0.1); color: #991b1b; border-color: rgba(239,68,68,0.3); }
+.actionDelete:not(:disabled):hover { background: rgba(239,68,68,0.2); }

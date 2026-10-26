@@ -233,19 +233,49 @@ export default function CleaningReportPage() {
             />
           </div>
 
+          <a
+            href={`/api/cleaning-records/daily-pdf?date=${encodeURIComponent(selectedDate)}`}
+            style={{
+              background: '#16a34a',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '10px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 800,
+            }}
+          >
+            ⬇ Daily Completion Report PDF
+          </a>
+
+          <Link
+            href="/sanitation/reports"
+            style={{
+              background: '#0284c7',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '10px 16px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            Daily Completion Summary →
+          </Link>
+
           <Link
             href="/reports/cleaning-events"
             style={{
               background: '#0f3460',
               color: '#ffffff',
               textDecoration: 'none',
-              padding: '10px 18px',
+              padding: '10px 16px',
               borderRadius: 10,
               fontSize: 13,
               fontWeight: 700,
             }}
           >
-            View All Cleaning Event Reports ({todayRecords.length} today) →
+            All Room Reports ({todayRecords.length} today) →
           </Link>
         </div>
       </div>
@@ -536,20 +566,50 @@ export default function CleaningReportPage() {
             >
               <span>{toast.text}</span>
               {toast.reportId && (
-                <Link
-                  href={`/reports/cleaning-events/${toast.reportId}`}
-                  style={{
-                    background: '#15803d',
-                    color: '#ffffff',
-                    padding: '6px 14px',
-                    borderRadius: 6,
-                    textDecoration: 'none',
-                    fontSize: 12,
-                    fontWeight: 700,
-                  }}
-                >
-                  View / Print Report →
-                </Link>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <a
+                    href={`/api/cleaning-records/daily-pdf?date=${encodeURIComponent(selectedDate)}`}
+                    style={{
+                      background: '#0f3460',
+                      color: '#ffffff',
+                      padding: '6px 14px',
+                      borderRadius: 6,
+                      textDecoration: 'none',
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    ⬇ Daily Completion PDF
+                  </a>
+                  <a
+                    href={`/api/cleaning-records/${toast.reportId}/pdf`}
+                    style={{
+                      background: '#0284c7',
+                      color: '#ffffff',
+                      padding: '6px 14px',
+                      borderRadius: 6,
+                      textDecoration: 'none',
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    ⬇ Room PDF
+                  </a>
+                  <Link
+                    href={`/reports/cleaning-events/${toast.reportId}`}
+                    style={{
+                      background: '#15803d',
+                      color: '#ffffff',
+                      padding: '6px 14px',
+                      borderRadius: 6,
+                      textDecoration: 'none',
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    View Report →
+                  </Link>
+                </div>
               )}
             </div>
           )}

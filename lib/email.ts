@@ -467,6 +467,7 @@ export interface QrIssueEmailData {
   completedAt?: string;
   resolutionNotes?: string;
   reportUrl: string;
+  pdfBuffer?: Buffer;
 }
 
 export async function sendQrIssueAlertEmail(
@@ -553,10 +554,87 @@ export async function sendQrIssueCompletionEmail(
       to: cleanEmails.join(', '),
       subject: `[Completion Report ${data.actionNumber}] Issue Resolved & Closed — ${data.area}`,
       html,
+      attachments: data.pdfBuffer
+        ? [
+            {
+              filename: `${data.actionNumber}-Completion-Report.pdf`,
+              content: data.pdfBuffer,
+              contentType: 'application/pdf',
+            },
+          ]
+        : undefined,
     });
     return { success: true };
   } catch (err) {
     console.error('[email] QR issue completion email failed:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Nu-Pure Daily Cleaning Completion Report PDF Email
+   ═══════════════════════════════════════════════════════════════ */
+
+export interface DailyCompletionEmailData {
+  date: string;
+  completedRoomsCount: number;
+  scheduledRoomsCount: number;
+  totalMinutes: number;
+  reportUrl: string;
+  pdfUrl: string;
+  pdfBuffer: Buffer;
+}
+
+export async function sendDailyCompletionReportEmail(
+  recipients: string[],
+  data: DailyCompletionEmailData,
+): Promise<{ success: boolean; error?: string }> {
+  const cleanEmails = [...new Set(recipients.map(e => e.trim()).filter(Boolean))];
+  if (cleanEmails.length === 0) return { success: true };
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<body style="margin:0;padding:24px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="620" cellpadding="0" cellspacing="0" align="center" style="max-width:620px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #cbd5e1;">
+    <tr><td style="background:linear-gradient(135deg,#0f3460,#0284c7);padding:24px 30px;color:#ffffff;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#bae6fd;">MJ Hygiene Services • Nu-Pure Beverages (Stapylton)</div>
+      <div style="font-size:21px;font-weight:800;margin-top:4px;">Daily Cleaning Completion Report (PDF Attached)</div>
+      <div style="font-size:13px;color:#e0f2fe;margin-top:4px;">Shift Date: <strong>${data.date}</strong> • Ref: <strong>DCR-${data.date.replace(/-/g, '')}</strong></div>
+    </td></tr>
+    <tr><td style="padding:26px 30px;">
+      <p style="margin:0 0 18px;font-size:14px;color:#334155;">Please find attached the official <strong>Daily Cleaning Completion Report PDF</strong> for the Nu-Pure Beverages Stapylton facility for <strong>${data.date}</strong>.</p>
+      <table width="100%" cellpadding="10" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:22px;font-size:13px;">
+        <tr><td style="color:#64748b;font-weight:700;width:180px;">Shift Date:</td><td style="color:#0f172a;font-weight:700;">${data.date}</td></tr>
+        <tr><td style="color:#64748b;font-weight:700;">Rooms Completed:</td><td style="color:#16a34a;font-weight:800;">${data.completedRoomsCount} of ${data.scheduledRoomsCount} Scheduled Rooms</td></tr>
+        <tr><td style="color:#64748b;font-weight:700;">Total Cleaning Duration:</td><td style="color:#0f172a;font-weight:700;">${data.totalMinutes} mins (${(data.totalMinutes / 60).toFixed(1)} hrs)</td></tr>
+        <tr><td style="color:#64748b;font-weight:700;">PDF Attachment:</td><td style="color:#0284c7;font-weight:700;">Nu-Pure-Daily-Completion-Report-${data.date}.pdf</td></tr>
+      </table>
+      <div style="text-align:center;">
+        <a href="${data.reportUrl}" style="display:inline-block;background:#0f3460;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;font-size:14px;margin-right:8px;">View Report in Portal →</a>
+        <a href="${data.pdfUrl}" style="display:inline-block;background:#0284c7;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;font-size:14px;">Download PDF Direct →</a>
+      </div>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM ?? 'MJ Hygiene — Nu-Pure Portal <noreply@nupure.tmservices.cloud>',
+      to: cleanEmails.join(', '),
+      subject: `[Daily Cleaning Completion Report] Nu-Pure Beverages — ${data.date}`,
+      html,
+      attachments: [
+        {
+          filename: `Nu-Pure-Daily-Completion-Report-${data.date}.pdf`,
+          content: data.pdfBuffer,
+          contentType: 'application/pdf',
+        },
+      ],
+    });
+    return { success: true };
+  } catch (err) {
+    console.error('[email] Daily completion PDF email failed:', err);
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }

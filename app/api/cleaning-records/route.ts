@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { NUPURE_ROOMS } from '@/lib/nupure-scope';
+import { generateDailyCompletionPdf, type CleaningRecordPdfRow } from '@/lib/nupure-pdf';
 
 export async function GET(request: NextRequest) {
   try {
@@ -144,8 +145,15 @@ export async function POST(request: NextRequest) {
       'Report': [
         {
           id: `rep_${record.id}`,
-          url: `/reports/cleaning-events/${record.id}`,
+          url: `/api/cleaning-records/${record.id}/pdf`,
           filename: `${reportNumber}.pdf`,
+          size: 0,
+          type: 'application/pdf',
+        },
+        {
+          id: `dcr_${dateStr}`,
+          url: `/api/cleaning-records/daily-pdf?date=${dateStr}`,
+          filename: `Daily-Completion-${dateStr}.pdf`,
           size: 0,
           type: 'application/pdf',
         },
@@ -177,6 +185,25 @@ export async function POST(request: NextRequest) {
       ],
       { onConflict: 'airtable_id' }
     );
+
+    // Automatically regenerate and store the Daily Cleaning Completion Report PDF for this date
+    try {
+      const { data: dayRecords } = await admin
+        .from('nupure_cleaning_records')
+        .select('*')
+        .eq('date', dateStr)
+        .order('created_at', { ascending: true });
+
+      const pdfBuffer = generateDailyCompletionPdf(dateStr, (dayRecords ?? []) as CleaningRecordPdfRow[]);
+      await admin.storage
+        .from('documents')
+        .upload(`daily-completion/Nu-Pure-Daily-Completion-Report-${dateStr}.pdf`, pdfBuffer, {
+          contentType: 'application/pdf',
+          upsert: true,
+        });
+    } catch (pdfErr) {
+      console.error('Non-fatal daily PDF generation error:', pdfErr);
+    }
 
     return NextResponse.json({ data: record }, { status: 201 });
   } catch (err) {

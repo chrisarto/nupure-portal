@@ -71,20 +71,50 @@ export default function CleaningEventsListPage() {
           </p>
         </div>
 
-        <Link
-          href="/cleaning-report"
-          style={{
-            background: '#0284c7',
-            color: '#ffffff',
-            textDecoration: 'none',
-            padding: '11px 20px',
-            borderRadius: 10,
-            fontSize: 14,
-            fontWeight: 700,
-          }}
-        >
-          + Log New Room Clean
-        </Link>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a
+            href={`/api/cleaning-records/daily-pdf?date=${encodeURIComponent(dateFilter || new Date().toISOString().slice(0, 10))}`}
+            style={{
+              background: '#0f3460',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '11px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 800,
+            }}
+          >
+            ⬇ Download Daily Completion PDF ({dateFilter || new Date().toISOString().slice(0, 10)})
+          </a>
+          <Link
+            href="/sanitation/reports"
+            style={{
+              background: '#16a34a',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '11px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            Daily Completion Summary →
+          </Link>
+          <Link
+            href="/cleaning-report"
+            style={{
+              background: '#0284c7',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '11px 20px',
+              borderRadius: 10,
+              fontSize: 14,
+              fontWeight: 700,
+            }}
+          >
+            + Log New Room Clean
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
@@ -221,17 +251,33 @@ export default function CleaningEventsListPage() {
                     </span>
                   </td>
                   <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                    <Link
-                      href={`/reports/cleaning-events/${rec.id}`}
-                      style={{
-                        color: '#0284c7',
-                        fontWeight: 700,
-                        textDecoration: 'none',
-                        fontSize: 13,
-                      }}
-                    >
-                      View / Print →
-                    </Link>
+                    <div style={{ display: 'inline-flex', gap: 10, alignItems: 'center' }}>
+                      <a
+                        href={`/api/cleaning-records/${rec.id}/pdf`}
+                        style={{
+                          background: '#0f3460',
+                          color: '#ffffff',
+                          padding: '5px 10px',
+                          borderRadius: 6,
+                          textDecoration: 'none',
+                          fontSize: 12,
+                          fontWeight: 700,
+                        }}
+                      >
+                        ⬇ PDF
+                      </a>
+                      <Link
+                        href={`/reports/cleaning-events/${rec.id}`}
+                        style={{
+                          color: '#0284c7',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                          fontSize: 13,
+                        }}
+                      >
+                        View →
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))

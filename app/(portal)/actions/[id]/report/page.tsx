@@ -62,22 +62,38 @@ export default function QrIssueCompletionReportPage() {
           ← Back to Required Actions Register
         </Link>
 
-        <button
-          type="button"
-          onClick={() => window.print()}
-          style={{
-            padding: '9px 18px',
-            borderRadius: 8,
-            border: 'none',
-            background: '#0f3460',
-            color: '#ffffff',
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          🖨️ Print / Save Completion Report PDF
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <a
+            href={`/api/qr-issues/${issue.id}/pdf`}
+            style={{
+              padding: '9px 18px',
+              borderRadius: 8,
+              background: '#16a34a',
+              color: '#ffffff',
+              textDecoration: 'none',
+              fontSize: 13,
+              fontWeight: 800,
+            }}
+          >
+            ⬇ Download Completion Report PDF
+          </a>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            style={{
+              padding: '9px 18px',
+              borderRadius: 8,
+              border: 'none',
+              background: '#0f3460',
+              color: '#ffffff',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            🖨️ Print
+          </button>
+        </div>
       </div>
 
       <div

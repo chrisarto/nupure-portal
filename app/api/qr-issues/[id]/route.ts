@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendQrIssueCompletionEmail } from '@/lib/email';
+import { generateQrIssueCompletionPdf, type QrIssuePdfRow } from '@/lib/nupure-pdf';
 
 export async function GET(
   _request: NextRequest,
@@ -111,6 +112,7 @@ export async function PATCH(
 
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nupure.tmservices.cloud';
       if (allRecipients.length > 0 && emailSetting?.send_on_submit !== false) {
+        const pdfBuffer = generateQrIssueCompletionPdf(updated as QrIssuePdfRow);
         const emailRes = await sendQrIssueCompletionEmail(allRecipients, {
           actionNumber: updated.action_number,
           zone: updated.zone,
@@ -125,6 +127,7 @@ export async function PATCH(
           completedAt: updated.completed_at,
           resolutionNotes: updated.resolution_notes,
           reportUrl: `${siteUrl}/actions/${updated.id}/report`,
+          pdfBuffer,
         });
 
         if (emailRes.success) {

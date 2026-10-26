@@ -76,7 +76,7 @@ export default function CleaningEventDetailPage() {
           ← Back to Cleaning Event Reports
         </Link>
 
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <Link
             href="/cleaning-report"
             style={{
@@ -92,11 +92,39 @@ export default function CleaningEventDetailPage() {
           >
             + Log Another Room
           </Link>
+          <a
+            href={`/api/cleaning-records/${record.id}/pdf`}
+            style={{
+              padding: '9px 16px',
+              borderRadius: 8,
+              background: '#0284c7',
+              color: '#ffffff',
+              textDecoration: 'none',
+              fontSize: 13,
+              fontWeight: 800,
+            }}
+          >
+            ⬇ Download Room PDF
+          </a>
+          <a
+            href={`/api/cleaning-records/daily-pdf?date=${encodeURIComponent(record.date)}`}
+            style={{
+              padding: '9px 16px',
+              borderRadius: 8,
+              background: '#16a34a',
+              color: '#ffffff',
+              textDecoration: 'none',
+              fontSize: 13,
+              fontWeight: 800,
+            }}
+          >
+            ⬇ Daily Completion Report PDF ({record.date})
+          </a>
           <button
             type="button"
             onClick={() => window.print()}
             style={{
-              padding: '9px 18px',
+              padding: '9px 16px',
               borderRadius: 8,
               border: 'none',
               background: '#0f3460',
@@ -106,7 +134,7 @@ export default function CleaningEventDetailPage() {
               cursor: 'pointer',
             }}
           >
-            🖨️ Print / Save PDF
+            🖨️ Print
           </button>
         </div>
       </div>

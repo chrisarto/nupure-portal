@@ -360,6 +360,8 @@ BEGIN
     LOOP
         EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', tbl);
         EXECUTE format('GRANT ALL ON TABLE public.%I TO postgres, anon, authenticated, service_role;', tbl);
+        EXECUTE format('DROP POLICY IF EXISTS "Enable read access for all" ON public.%I;', tbl);
+        EXECUTE format('CREATE POLICY "Enable read access for all" ON public.%I FOR SELECT TO public USING (true);', tbl);
         EXECUTE format('DROP POLICY IF EXISTS "Authenticated users full access" ON public.%I;', tbl);
         EXECUTE format('CREATE POLICY "Authenticated users full access" ON public.%I FOR ALL TO authenticated USING (true) WITH CHECK (true);', tbl);
         EXECUTE format('DROP POLICY IF EXISTS "Service role full access" ON public.%I;', tbl);

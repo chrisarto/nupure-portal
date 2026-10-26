@@ -2,69 +2,52 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import type { SanitationTask } from '@/lib/airtable';
+import type { AirtableAttachment, SanitationTask } from '@/lib/airtable';
+
+type Row = { airtable_id: string; data: Record<string, unknown> };
+
+function str(v: unknown): string {
+  if (typeof v === 'string') return v;
+  if (Array.isArray(v) && v.length > 0) return String(v[0]);
+  return '';
+}
+
+function mapRow(row: Row): SanitationTask {
+  const f = row.data ?? {};
+  return {
+    id: row.airtable_id,
+    cleaningTask: str(f['Cleaning Task']),
+    area: str(f['Area']),
+    area2: str(f['Area 2']),
+    department: str(f['Department']),
+    assetElement: str(f['Asset / Element'] ?? f['SCOPE OF WORK']),
+    cleaningFrequency: str(f['Cleaning Frequency'] ?? f['Frequency']),
+    frequencyInDays:
+      typeof f['Frequency in days'] === 'number' ? f['Frequency in days'] : 1,
+    permitRequirement: str(f['Permit Requirement']),
+    docGotzinger: str(f['DOC_Gotzinger'] ?? f['Doc-Nu-Pure']),
+    areaGroup: str(f['Area Group'] ?? f['Area (1 of 3)']),
+    procedureDocument: Array.isArray(f['Procedure Document'])
+      ? (f['Procedure Document'] as AirtableAttachment[])
+      : [],
+    procedureSignOffUrl: str(f['Procedure Sign Off'] ?? f['Procedure Sign off URL']),
+  };
+}
 
 export async function GET(): Promise<NextResponse> {
   try {
     const supabase = await createClient();
-    
-    // Get the most recent pre-op submission to extract the current checklist items
-    const { data: latestSub, error: subError } = await supabase
-      .from('nupure_form_submissions')
-      .select('responses')
-      .eq('template_slug', 'client-pre-op')
-      .order('submitted_at', { ascending: false })
-      .limit(1)
-      .single();
+    const { data: rows, error } = await supabase
+      .from('nupure_sanitation_tasks')
+      .select('airtable_id, data')
+      .order('airtable_id', { ascending: true });
 
-    if (subError && subError.code !== 'PGRST116') {
-      console.error('Sanitation API Supabase error:', subError.message);
-      return NextResponse.json({ error: subError.message }, { status: 500 });
+    if (error) {
+      console.error('Sanitation API Supabase error:', error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const tasks: SanitationTask[] = [];
-    
-    if (latestSub?.responses) {
-      const resp = latestSub.responses as Record<string, any>;
-      let idCounter = 1;
-      
-      for (const [key, val] of Object.entries(resp)) {
-        if (key.startsWith('_') || key === 'global_photos') continue;
-        if (typeof val !== 'object' || !val) continue;
-        
-        const area = val._area || 'Other';
-        const label = val._label || key;
-        
-        // Everything is daily except FDC and Fogging which are weekly
-        const isWeekly = label.toLowerCase().includes('fdc') || label.toLowerCase().includes('fog');
-        const freq = isWeekly ? 'Weekly' : 'Daily';
-        const freqDays = isWeekly ? 7 : 1;
-        
-        tasks.push({
-          id: `preop-task-${idCounter++}`,
-          cleaningTask: label,
-          area: area,
-          area2: '',
-          department: '',
-          assetElement: '',
-          cleaningFrequency: freq,
-          frequencyInDays: freqDays,
-          permitRequirement: '',
-          docGotzinger: '',
-          areaGroup: '',
-          procedureDocument: [],
-          procedureSignOffUrl: '',
-        });
-      }
-    }
-    
-    // Sort by area then task name
-    tasks.sort((a, b) => {
-      const cmp = a.area.localeCompare(b.area);
-      if (cmp !== 0) return cmp;
-      return a.cleaningTask.localeCompare(b.cleaningTask);
-    });
-
+    const tasks = (rows ?? []).map(mapRow);
     return NextResponse.json({ data: tasks, count: tasks.length });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

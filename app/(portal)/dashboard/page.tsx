@@ -6,15 +6,24 @@ import styles from './Dashboard.module.css';
 import type {
   TrainingDocument,
   ScheduleEvent,
-  HandoverReport,
-  PreOpReport,
   Employee,
-  SubmissionRecord,
 } from '@/lib/types';
 
 interface ApiResponse<T> {
   data: T[];
   count: number;
+}
+
+interface CleaningRecordSummary {
+  id: string;
+  report_number: string;
+  date: string;
+  zone: string;
+  location: string;
+  total_time_minutes: number;
+  visual_inspection_passed: boolean;
+  submitted_by: string;
+  created_at: string;
 }
 
 interface KpiData {
@@ -26,10 +35,9 @@ interface KpiData {
   scheduleCompleted: number;
   scheduleOverdue: number;
   scheduleInProgress: number;
-  handoverReports: number;
-  preOpReports: number;
   sanitationTasks: number;
   roomCleansCount: number;
+  hygieneServicesCount: number;
   openQrIssues: number;
   closedQrIssues: number;
   stocktakeOrdersCount: number;
@@ -37,41 +45,24 @@ interface KpiData {
 
 export default function DashboardPage() {
   const [kpi, setKpi] = useState<KpiData | null>(null);
+  const [recentRoomReports, setRecentRoomReports] = useState<CleaningRecordSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dailySubmissions, setDailySubmissions] = useState<SubmissionRecord[]>([]);
-  const [weeklySubmissions, setWeeklySubmissions] = useState<SubmissionRecord[]>([]);
-  const [recentSubmissions, setRecentSubmissions] = useState<SubmissionRecord[]>([]);
 
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [docs, staff, schedule, handover, preop, sanitation, cleaningRecs, qrIssues, stocktake] =
+      const [docs, staff, schedule, sanitation, cleaningRecs, qrIssues, stocktake] =
         await Promise.all([
           fetch('/api/documents').then((r) => r.json() as Promise<ApiResponse<TrainingDocument>>),
           fetch('/api/staff').then((r) => r.json() as Promise<ApiResponse<Employee>>),
           fetch('/api/schedule').then((r) => r.json() as Promise<ApiResponse<ScheduleEvent>>),
-          fetch('/api/reports/handover').then((r) => r.json() as Promise<ApiResponse<HandoverReport>>),
-          fetch('/api/reports/pre-op').then((r) => r.json() as Promise<ApiResponse<PreOpReport>>),
           fetch('/api/sanitation').then((r) => r.json() as Promise<ApiResponse<{ id: string }>>),
-          fetch('/api/cleaning-records').then((r) => r.json() as Promise<ApiResponse<{ id: string }>>),
+          fetch('/api/cleaning-records').then((r) => r.json() as Promise<ApiResponse<CleaningRecordSummary>>),
           fetch('/api/qr-issues').then((r) => r.json() as Promise<ApiResponse<{ id: string; status: string }>>),
           fetch('/api/stocktake').then((r) => r.json() as Promise<{ logs?: Array<{ id: string }> }>),
         ]);
-
-      void fetch('/api/submissions?slug=daily-facility-inspection&limit=30')
-        .then((r) => r.json() as Promise<ApiResponse<SubmissionRecord>>)
-        .then((j) => { setDailySubmissions(j.data ?? []); })
-        .catch(() => {});
-      void fetch('/api/submissions?slug=weekly-hygiene-audit&limit=10')
-        .then((r) => r.json() as Promise<ApiResponse<SubmissionRecord>>)
-        .then((j) => { setWeeklySubmissions(j.data ?? []); })
-        .catch(() => {});
-      void fetch('/api/submissions?limit=5')
-        .then((r) => r.json() as Promise<ApiResponse<SubmissionRecord>>)
-        .then((j) => { setRecentSubmissions(j.data ?? []); })
-        .catch(() => {});
 
       const controlDocs = (docs.data ?? []).filter((d) => d.status.includes('Control Document') || d.status === 'Current').length;
       const reviewDue = (docs.data ?? []).filter((d) => {
@@ -87,6 +78,16 @@ export default function DashboardPage() {
       const openIssues = (qrIssues.data ?? []).filter((i) => i.status !== 'completed').length;
       const closedIssues = (qrIssues.data ?? []).filter((i) => i.status === 'completed').length;
 
+      const allCleanRecs = cleaningRecs.data ?? [];
+      const hygieneCount = allCleanRecs.filter(
+        r =>
+          r.location.toLowerCase().includes('sanitary') ||
+          r.location.toLowerCase().includes('air freshener') ||
+          r.zone.toLowerCase().includes('hygiene services')
+      ).length;
+
+      setRecentRoomReports(allCleanRecs.slice(0, 8));
+
       setKpi({
         totalDocuments: docs.count ?? 0,
         controlDocuments: controlDocs,
@@ -96,10 +97,9 @@ export default function DashboardPage() {
         scheduleCompleted: completed,
         scheduleOverdue: overdue,
         scheduleInProgress: inProgress,
-        handoverReports: handover.count ?? 0,
-        preOpReports: preop.count ?? 0,
         sanitationTasks: sanitation.count ?? 0,
         roomCleansCount: cleaningRecs.count ?? 0,
+        hygieneServicesCount: hygieneCount,
         openQrIssues: openIssues,
         closedQrIssues: closedIssues,
         stocktakeOrdersCount: (stocktake.logs ?? []).length,
@@ -126,15 +126,7 @@ export default function DashboardPage() {
     ? Math.round((kpi.controlDocuments / kpi.totalDocuments) * 100)
     : 100;
 
-  const dailyWithScore = dailySubmissions.filter((s) => s.overall_score !== null);
-  const avgDailyScore = dailyWithScore.length > 0
-    ? Math.round(dailyWithScore.reduce((sum, s) => sum + (s.overall_score ?? 0), 0) / dailyWithScore.length * 10) / 10
-    : null;
-
-  const weeklyWithScore = weeklySubmissions.filter((s) => s.overall_score !== null);
-  const avgWeeklyScore = weeklyWithScore.length > 0
-    ? Math.round(weeklyWithScore.reduce((sum, s) => sum + (s.overall_score ?? 0), 0) / weeklyWithScore.length * 10) / 10
-    : null;
+  const todayIso = new Date().toISOString().slice(0, 10);
 
   if (error) {
     return (
@@ -163,7 +155,7 @@ export default function DashboardPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: 14,
           marginBottom: 24,
         }}
@@ -185,6 +177,49 @@ export default function DashboardPage() {
           <div style={{ fontSize: 17, fontWeight: 800, marginTop: 4 }}>Log Room Clean →</div>
           <div style={{ fontSize: 12, color: '#e0f2fe', marginTop: 4 }}>
             Complete 1 room at a time &amp; update schedule ({kpi?.roomCleansCount ?? 0} logged)
+          </div>
+        </Link>
+
+        <Link
+          href="/hygiene-services"
+          style={{
+            background: 'linear-gradient(135deg, #14532d, #16a34a)',
+            color: '#ffffff',
+            textDecoration: 'none',
+            padding: '18px 20px',
+            borderRadius: 12,
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#dcfce7' }}>
+            Sanitary &amp; Air Care
+          </div>
+          <div style={{ fontSize: 17, fontWeight: 800, marginTop: 4 }}>
+            Sanitary Bins &amp; Air Fresheners →
+          </div>
+          <div style={{ fontSize: 12, color: '#f0fdf4', marginTop: 4 }}>
+            10 Sanitary Bins &amp; 9 Auto Dispensers ({kpi?.hygieneServicesCount ?? 0} logs)
+          </div>
+        </Link>
+
+        <Link
+          href="/sanitation/reports"
+          style={{
+            background: '#ffffff',
+            border: '1px solid #cbd5e1',
+            color: '#0f172a',
+            textDecoration: 'none',
+            padding: '18px 20px',
+            borderRadius: 12,
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#0f3460' }}>
+            Daily PDF Rollup
+          </div>
+          <div style={{ fontSize: 17, fontWeight: 800, marginTop: 4 }}>
+            Daily Completion Report PDF →
+          </div>
+          <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+            Download or email formatted daily A4 PDF report
           </div>
         </Link>
 
@@ -243,26 +278,6 @@ export default function DashboardPage() {
             Weekly check &amp; auto-email order to Nu-Pure ({kpi?.stocktakeOrdersCount ?? 0} sent)
           </div>
         </Link>
-
-        <Link
-          href="/qr-codes"
-          style={{
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            color: '#0f172a',
-            textDecoration: 'none',
-            padding: '18px 20px',
-            borderRadius: 12,
-          }}
-        >
-          <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#16a34a' }}>
-            Scan-to-Report Signs
-          </div>
-          <div style={{ fontSize: 17, fontWeight: 800, marginTop: 4 }}>Print Site QR Posters →</div>
-          <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-            26 room-specific QR code posters for Stapylton
-          </div>
-        </Link>
       </div>
 
       {/* KPI Cards Row */}
@@ -271,13 +286,10 @@ export default function DashboardPage() {
           <div className={styles.kpiIcon}>📋</div>
           <div className={styles.kpiContent}>
             <div className={styles.kpiValue}>{loading ? '—' : kpi?.totalDocuments}</div>
-            <div className={styles.kpiLabel}>Training Documents</div>
+            <div className={styles.kpiLabel}>Corporate &amp; Training Docs</div>
             {!loading && kpi && (
               <div className={styles.kpiMeta}>
                 <span className={styles.kpiGood}>{kpi.controlDocuments} current</span>
-                {kpi.reviewDueDocuments > 0 && (
-                  <span className={styles.kpiWarn}>{kpi.reviewDueDocuments} due for review</span>
-                )}
               </div>
             )}
           </div>
@@ -315,52 +327,32 @@ export default function DashboardPage() {
         <div className={`${styles.kpiCard} ${styles.kpiAmber}`}>
           <div className={styles.kpiIcon}>🧹</div>
           <div className={styles.kpiContent}>
-            <div className={styles.kpiValue}>{loading ? '—' : kpi?.sanitationTasks}</div>
-            <div className={styles.kpiLabel}>Sanitation Scope Areas</div>
-            {!loading && kpi && (
-              <div className={styles.kpiMeta}>
-                <span>5 Zones + Hygiene Services</span>
-              </div>
-            )}
+            <div className={styles.kpiValue}>26</div>
+            <div className={styles.kpiLabel}>Designated Scope Areas</div>
+            <div className={styles.kpiMeta}>
+              <span>45 hrs/wk • 7-Day Service</span>
+            </div>
           </div>
         </div>
 
         <div className={`${styles.kpiCard} ${styles.kpiGreen}`}>
-          <div className={styles.kpiIcon}>📋</div>
+          <div className={styles.kpiIcon}>📄</div>
           <div className={styles.kpiContent}>
-            <div
-              className={styles.kpiValue}
-              style={{
-                color: avgDailyScore !== null
-                  ? (avgDailyScore >= 95 ? '#10b981' : avgDailyScore >= 85 ? '#ca8a04' : '#ef4444')
-                  : undefined,
-              }}
-            >
-              {avgDailyScore !== null ? `${avgDailyScore}%` : '100%'}
-            </div>
-            <div className={styles.kpiLabel}>Avg Daily Inspection Score</div>
+            <div className={styles.kpiValue}>{loading ? '—' : kpi?.roomCleansCount}</div>
+            <div className={styles.kpiLabel}>Room Clean Reports</div>
             <div className={styles.kpiMeta}>
-              <span>{dailySubmissions.length} facility inspections</span>
+              <span>Digital Room-by-Room Sign-Offs</span>
             </div>
           </div>
         </div>
 
         <div className={`${styles.kpiCard} ${styles.kpiBlue}`}>
-          <div className={styles.kpiIcon}>📆</div>
+          <div className={styles.kpiIcon}>♻️</div>
           <div className={styles.kpiContent}>
-            <div
-              className={styles.kpiValue}
-              style={{
-                color: avgWeeklyScore !== null
-                  ? (avgWeeklyScore >= 95 ? '#10b981' : avgWeeklyScore >= 85 ? '#ca8a04' : '#ef4444')
-                  : undefined,
-              }}
-            >
-              {avgWeeklyScore !== null ? `${avgWeeklyScore}%` : '100%'}
-            </div>
-            <div className={styles.kpiLabel}>Avg Weekly Hygiene Score</div>
+            <div className={styles.kpiValue}>19</div>
+            <div className={styles.kpiLabel}>Managed Hygiene Units</div>
             <div className={styles.kpiMeta}>
-              <span>{weeklySubmissions.length} weekly QA audits</span>
+              <span>10 Sanitary Bins • 9 Air Fresheners</span>
             </div>
           </div>
         </div>
@@ -412,7 +404,7 @@ export default function DashboardPage() {
         <div className={styles.statCard}>
           <div className={styles.statHeader}>
             <span className={styles.statIcon}>📝</span>
-            <span className={styles.statTitle}>Site Reports &amp; Actions</span>
+            <span className={styles.statTitle}>Site Reports &amp; Orders</span>
           </div>
           <div className={styles.scheduleBreakdown}>
             <div className={styles.breakdownItem}>
@@ -429,48 +421,60 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Inspections */}
+      {/* Recent Room Clean & Hygiene Service Reports */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Recent Inspections</h2>
-          <a href="/forms" className={styles.sectionLink}>View all →</a>
+          <h2 className={styles.sectionTitle}>Recent Room Clean &amp; Hygiene Service Reports</h2>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <a
+              href={`/api/cleaning-records/daily-pdf?date=${todayIso}`}
+              style={{
+                color: '#16a34a',
+                fontWeight: 800,
+                fontSize: 13,
+                textDecoration: 'none',
+              }}
+            >
+              ⬇ Download Daily Completion PDF →
+            </a>
+            <Link href="/reports/cleaning-events" className={styles.sectionLink}>
+              View all reports →
+            </Link>
+          </div>
         </div>
-        {recentSubmissions.length === 0 ? (
+        {recentRoomReports.length === 0 ? (
           <div className={styles.emptyCard}>
-            <p>No inspection submissions yet. <a href="/forms">Start a facility inspection</a> or <a href="/cleaning-report">log a room clean</a>.</p>
+            <p>
+              No room cleaning reports logged yet.{' '}
+              <Link href="/cleaning-report">Log a room clean</Link> or{' '}
+              <Link href="/hygiene-services">record sanitary bin &amp; air freshener changes</Link>.
+            </p>
           </div>
         ) : (
           <div className={styles.recentList}>
-            {recentSubmissions.map((s) => (
-              <a key={s.id} href={`/reports/submissions/${s.id}`} className={styles.recentItem}>
+            {recentRoomReports.map((r) => (
+              <Link key={r.id} href={`/reports/cleaning-events/${r.id}`} className={styles.recentItem}>
                 <div className={styles.recentItemLeft}>
-                  <span className={styles.recentItemForm}>{s.template_name}</span>
+                  <span className={styles.recentItemForm}>
+                    {r.location} <span style={{ color: '#64748b', fontWeight: 500 }}>({r.zone})</span>
+                  </span>
                   <span className={styles.recentItemMeta}>
-                    {s.submitted_by || 'Unknown'}
-                    {' · '}
-                    {new Date(s.submitted_at ?? s.created_at).toLocaleDateString('en-AU', {
-                      day: '2-digit',
-                      month: 'short',
-                    })}
+                    {r.report_number} &bull; {r.submitted_by || 'MJ Hygiene'} &bull; {r.date} ({r.total_time_minutes} mins)
                   </span>
                 </div>
-                {s.overall_score !== null && (
-                  <span
-                    className={styles.recentItemScore}
-                    style={{
-                      color: s.overall_score >= 95 ? '#10b981' : s.overall_score >= 85 ? '#ca8a04' : '#ef4444',
-                      background:
-                        s.overall_score >= 95
-                          ? 'rgba(16,185,129,0.1)'
-                          : s.overall_score >= 85
-                          ? 'rgba(202,138,4,0.1)'
-                          : 'rgba(239,68,68,0.1)',
-                    }}
-                  >
-                    {s.overall_score}%
-                  </span>
-                )}
-              </a>
+                <span
+                  className={styles.recentItemScore}
+                  style={{
+                    color: r.visual_inspection_passed !== false ? '#10b981' : '#ef4444',
+                    background:
+                      r.visual_inspection_passed !== false
+                        ? 'rgba(16,185,129,0.1)'
+                        : 'rgba(239,68,68,0.1)',
+                  }}
+                >
+                  {r.visual_inspection_passed !== false ? 'PASSED ✓' : 'RECLEAN'}
+                </span>
+              </Link>
             ))}
           </div>
         )}

@@ -34,6 +34,8 @@ export default function CleaningReportPage() {
   ]);
   const [visualPassed, setVisualPassed] = useState<boolean>(true);
   const [ssopVerified, setSsopVerified] = useState<boolean>(true);
+  const [sanitaryBinChanged, setSanitaryBinChanged] = useState<boolean>(false);
+  const [airFreshenerChanged, setAirFreshenerChanged] = useState<boolean>(false);
   const [comments, setComments] = useState<string>('');
   const [correctiveAction, setCorrectiveAction] = useState<string>('');
   const [beforePhotos, setBeforePhotos] = useState<string[]>([]);
@@ -71,6 +73,8 @@ export default function CleaningReportPage() {
     });
     setCheckedItems(allChecked);
     setTimeMinutes(room.estimatedMinutes);
+    setSanitaryBinChanged(false);
+    setAirFreshenerChanged(false);
     setComments('');
     setCorrectiveAction('');
     setBeforePhotos([]);
@@ -79,7 +83,10 @@ export default function CleaningReportPage() {
   };
 
   useEffect(() => {
-    handleSelectRoom(NUPURE_ROOMS[0]);
+    const params = new URLSearchParams(window.location.search);
+    const roomParam = params.get('room');
+    const matched = roomParam ? NUPURE_ROOMS.find(r => r.room === roomParam) : undefined;
+    handleSelectRoom(matched ?? NUPURE_ROOMS[0]);
   }, []);
 
   const toggleChemical = (chem: string) => {
@@ -118,6 +125,18 @@ export default function CleaningReportPage() {
         label,
         completed: !!checkedItems[idx],
       }));
+      if (sanitaryBinChanged) {
+        checklistPayload.push({
+          label: 'Sanitary Bin Liner Replaced, Unit Sanitised & Waste Collected',
+          completed: true,
+        });
+      }
+      if (airFreshenerChanged) {
+        checklistPayload.push({
+          label: 'Automatic Air Freshener Refill / Battery Changed & Spray Checked',
+          completed: true,
+        });
+      }
 
       const res = await fetch('/api/cleaning-records', {
         method: 'POST',
@@ -249,9 +268,24 @@ export default function CleaningReportPage() {
           </a>
 
           <Link
-            href="/sanitation/reports"
+            href="/hygiene-services"
             style={{
               background: '#0284c7',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '10px 16px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            ♻️ Sanitary &amp; Air Freshener Changes →
+          </Link>
+
+          <Link
+            href="/sanitation/reports"
+            style={{
+              background: '#0f3460',
               color: '#ffffff',
               textDecoration: 'none',
               padding: '10px 16px',
@@ -852,6 +886,66 @@ export default function CleaningReportPage() {
                 }}
               >
                 {ssopVerified ? 'VERIFIED ✓' : 'NO'}
+              </button>
+            </div>
+
+            <div
+              style={{
+                padding: '12px 16px',
+                borderRadius: 10,
+                border: sanitaryBinChanged ? '1px solid #16a34a' : '1px solid #e2e8f0',
+                background: sanitaryBinChanged ? '#f0fdf4' : '#f8fafc',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>Sanitary Bin Liner Changed</span>
+              <button
+                type="button"
+                onClick={() => setSanitaryBinChanged(!sanitaryBinChanged)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  border: 'none',
+                  background: sanitaryBinChanged ? '#16a34a' : '#cbd5e1',
+                  color: sanitaryBinChanged ? '#ffffff' : '#334155',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                {sanitaryBinChanged ? 'CHANGED ✓' : 'NO'}
+              </button>
+            </div>
+
+            <div
+              style={{
+                padding: '12px 16px',
+                borderRadius: 10,
+                border: airFreshenerChanged ? '1px solid #0284c7' : '1px solid #e2e8f0',
+                background: airFreshenerChanged ? '#f0f9ff' : '#f8fafc',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>Air Freshener Refill / Battery Changed</span>
+              <button
+                type="button"
+                onClick={() => setAirFreshenerChanged(!airFreshenerChanged)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  border: 'none',
+                  background: airFreshenerChanged ? '#0284c7' : '#cbd5e1',
+                  color: airFreshenerChanged ? '#ffffff' : '#334155',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                {airFreshenerChanged ? 'CHANGED ✓' : 'NO'}
               </button>
             </div>
           </div>

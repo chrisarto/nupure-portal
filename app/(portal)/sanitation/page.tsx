@@ -8,6 +8,9 @@ import {
   NUPURE_SERVICE_MODEL,
   NUPURE_SANITARY_BINS,
   NUPURE_AIR_FRESHENERS,
+  NUPURE_PROCEDURE_PDF_URL,
+  NUPURE_SOPS,
+  getRoomSopInfo,
 } from '@/lib/nupure-scope';
 
 interface ScheduleEventSummary {
@@ -141,6 +144,23 @@ export default function SanitationScopePage() {
         </div>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a
+            href={NUPURE_PROCEDURE_PDF_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#1e293b',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '11px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 800,
+              border: '1px solid #334155',
+            }}
+          >
+            📘 Cleaning Procedures Manual (SOP PDF) ↗
+          </a>
           <Link
             href="/cleaning-report"
             style={{
@@ -535,6 +555,7 @@ export default function SanitationScopePage() {
                   const isWeekly = room.frequencyBadge === 'WEEKLY';
                   const badgeBg = is7Day ? '#0284c7' : isWeekly ? '#16a34a' : '#6366f1';
                   const sched = scheduleMap[room.room];
+                  const sopInfo = getRoomSopInfo(room.code);
 
                   return (
                     <div
@@ -564,7 +585,7 @@ export default function SanitationScopePage() {
                           }}
                         >
                           <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                               <span
                                 style={{
                                   fontSize: 11,
@@ -576,6 +597,20 @@ export default function SanitationScopePage() {
                                 }}
                               >
                                 {room.code}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 800,
+                                  color: sopInfo.colourHex,
+                                  background: sopInfo.colourBg,
+                                  padding: '2px 8px',
+                                  borderRadius: 5,
+                                  border: `1px solid ${sopInfo.colourHex}33`,
+                                }}
+                                title={sopInfo.title}
+                              >
+                                {sopInfo.shortCode} &bull; {sopInfo.colourZone.split(' — ')[0]}
                               </span>
                               {room.subGroup && (
                                 <span style={{ fontSize: 11.5, fontWeight: 700, color: '#64748b' }}>
@@ -670,6 +705,8 @@ export default function SanitationScopePage() {
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
+                          flexWrap: 'wrap',
+                          gap: 8,
                           fontSize: 12,
                         }}
                       >
@@ -682,29 +719,45 @@ export default function SanitationScopePage() {
                           )}
                         </div>
 
-                        {room.zone === 'Hygiene Services & Consumables' ? (
-                          <Link
-                            href="/hygiene-services"
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <a
+                            href={NUPURE_PROCEDURE_PDF_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             style={{
-                              color: '#16a34a',
-                              fontWeight: 800,
+                              color: '#475569',
+                              fontWeight: 700,
                               textDecoration: 'none',
+                              fontSize: 11.5,
                             }}
+                            title={`Open ${sopInfo.code} (${sopInfo.pageRef}) in Cleaning Procedures Manual`}
                           >
-                            Log Unit Changes →
-                          </Link>
-                        ) : (
-                          <Link
-                            href={`/cleaning-report?room=${encodeURIComponent(room.room)}`}
-                            style={{
-                              color: '#0284c7',
-                              fontWeight: 800,
-                              textDecoration: 'none',
-                            }}
-                          >
-                            Log Room Clean →
-                          </Link>
-                        )}
+                            📄 {sopInfo.shortCode} PDF ↗
+                          </a>
+                          {room.zone === 'Hygiene Services & Consumables' ? (
+                            <Link
+                              href="/hygiene-services"
+                              style={{
+                                color: '#16a34a',
+                                fontWeight: 800,
+                                textDecoration: 'none',
+                              }}
+                            >
+                              Log Unit Changes →
+                            </Link>
+                          ) : (
+                            <Link
+                              href={`/cleaning-report?room=${encodeURIComponent(room.room)}`}
+                              style={{
+                                color: '#0284c7',
+                                fontWeight: 800,
+                                textDecoration: 'none',
+                              }}
+                            >
+                              Log Room Clean →
+                            </Link>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -848,6 +901,125 @@ export default function SanitationScopePage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Core Task Standard Operating Procedures (MJH-SOP-NUPURE-001 — SOP-01 to SOP-08) */}
+      <div
+        style={{
+          background: '#ffffff',
+          border: '1px solid #cbd5e1',
+          borderRadius: 12,
+          overflow: 'hidden',
+          marginBottom: 28,
+        }}
+      >
+        <div
+          style={{
+            padding: '16px 22px',
+            background: 'linear-gradient(135deg, #0f172a, #0f3460)',
+            color: '#ffffff',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 11.5, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Controlled Work Procedure Manual &bull; MJH-SOP-NUPURE-001 (v1.0)
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 800, marginTop: 2 }}>
+              Core Task Standard Operating Procedures (SOP-01 to SOP-08) &amp; Colour Segregation
+            </div>
+          </div>
+
+          <a
+            href={NUPURE_PROCEDURE_PDF_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#0284c7',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '9px 16px',
+              borderRadius: 8,
+              fontSize: 12.5,
+              fontWeight: 800,
+            }}
+          >
+            📘 View / Download Full 32-Page SOP Manual (PDF) ↗
+          </a>
+        </div>
+
+        <div
+          style={{
+            padding: 18,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
+            gap: 14,
+          }}
+        >
+          {NUPURE_SOPS.map(sop => (
+            <div
+              key={sop.code}
+              style={{
+                border: '1px solid #e2e8f0',
+                borderRadius: 10,
+                padding: 14,
+                background: '#f8fafc',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: 10,
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: sop.colourHex,
+                      background: sop.colourBg,
+                      padding: '2px 8px',
+                      borderRadius: 5,
+                    }}
+                  >
+                    {sop.shortCode} ({sop.code})
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b' }}>
+                    {sop.pageRef}
+                  </span>
+                </div>
+                <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>
+                  {sop.title}
+                </div>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: sop.colourHex, marginBottom: 6 }}>
+                  Segregation: {sop.colourZone}
+                </div>
+                <p style={{ fontSize: 12.5, color: '#475569', margin: 0, lineHeight: 1.45 }}>
+                  {sop.summary}
+                </p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <a
+                  href={NUPURE_PROCEDURE_PDF_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: '#0284c7',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Open {sop.shortCode} in Manual ↗
+                </a>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

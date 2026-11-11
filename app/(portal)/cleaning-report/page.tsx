@@ -2,7 +2,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { NUPURE_ZONES, NUPURE_ROOMS, NUPURE_CHEMICALS, type NuPureRoomSpec } from '@/lib/nupure-scope';
+import {
+  NUPURE_ZONES,
+  NUPURE_ROOMS,
+  NUPURE_CHEMICALS,
+  NUPURE_PROCEDURE_PDF_URL,
+  getRoomSopInfo,
+  type NuPureRoomSpec,
+} from '@/lib/nupure-scope';
 
 interface CleaningRecordRow {
   id: string;
@@ -251,6 +258,23 @@ export default function CleaningReportPage() {
               }}
             />
           </div>
+
+          <a
+            href={NUPURE_PROCEDURE_PDF_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#1e293b',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '10px 16px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 800,
+            }}
+          >
+            📘 Cleaning Procedures Manual (PDF) ↗
+          </a>
 
           <a
             href={`/api/cleaning-records/daily-pdf?date=${encodeURIComponent(selectedDate)}`}
@@ -560,6 +584,55 @@ export default function CleaningReportPage() {
               </div>
             )}
           </div>
+
+          {/* Controlling SOP & Colour Segregation Callout */}
+          {(() => {
+            const sop = getRoomSopInfo(selectedRoom.code);
+            return (
+              <div
+                style={{
+                  background: sop.colourBg,
+                  border: `1px solid ${sop.colourHex}33`,
+                  borderLeft: `4px solid ${sop.colourHex}`,
+                  borderRadius: 10,
+                  padding: '12px 16px',
+                  marginBottom: 18,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 10,
+                }}
+              >
+                <div style={{ flex: '1 1 320px' }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: sop.colourHex, textTransform: 'uppercase' }}>
+                    Controlling Work Procedure: {sop.shortCode} ({sop.code}) &bull; {sop.colourZone}
+                  </div>
+                  <div style={{ fontSize: 12.5, color: '#1e293b', marginTop: 3, lineHeight: 1.45 }}>
+                    {sop.summary}
+                  </div>
+                </div>
+                <a
+                  href={NUPURE_PROCEDURE_PDF_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: '#ffffff',
+                    color: sop.colourHex,
+                    border: `1px solid ${sop.colourHex}44`,
+                    padding: '7px 14px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  📄 View {sop.shortCode} in Manual ({sop.pageRef}) ↗
+                </a>
+              </div>
+            );
+          })()}
 
           {/* Scope Limitation Alert if applicable */}
           {selectedRoom.limitations && (

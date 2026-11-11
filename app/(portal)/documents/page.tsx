@@ -6,6 +6,7 @@ import styles from './Documents.module.css';
 import type { TrainingDocument } from '@/lib/types';
 import { CSVExportButton } from '@/app/components/ui/CSVExportButton';
 import AttachmentLink from '@/app/components/AttachmentLink';
+import { NUPURE_PROCEDURE_PDF_URL } from '@/lib/nupure-scope';
 
 /* ── Cover image mapping by normalised document type ──────────── */
 const COVER_MAP: Record<string, string> = {
@@ -160,6 +161,52 @@ export default function DocumentsPage() {
             />
           </div>
         </div>
+      </div>
+
+      {/* Featured Master Cleaning Procedures Manual Banner */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #0f172a, #0f3460)',
+          color: '#ffffff',
+          borderRadius: 12,
+          padding: '18px 24px',
+          marginBottom: 20,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 16,
+          boxShadow: '0 2px 8px rgba(15, 23, 42, 0.12)',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 11.5, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Controlled Site Work Procedure &amp; SOP Manual &bull; MJH-SOP-NUPURE-001 (v1.0)
+          </div>
+          <div style={{ fontSize: 17, fontWeight: 800, marginTop: 4 }}>
+            Nu-Pure Beverages — Site Work Procedure &amp; Standard Operating Procedures Manual (32 Pages)
+          </div>
+          <div style={{ fontSize: 13, color: '#cbd5e1', marginTop: 3 }}>
+            Includes Core Task SOPs (SOP-01 to SOP-08), Colour-Coded Segregation Matrix, 29 Room Checklists, Sanitary &amp; Air Freshener Registers, and Shift Run Sheets.
+          </div>
+        </div>
+        <a
+          href={NUPURE_PROCEDURE_PDF_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            background: '#0284c7',
+            color: '#ffffff',
+            textDecoration: 'none',
+            padding: '11px 18px',
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 800,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          📘 View / Download Master SOP Manual (PDF) ↗
+        </a>
       </div>
 
       {/* Tab bar */}

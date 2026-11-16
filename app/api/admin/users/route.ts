@@ -29,18 +29,20 @@ export async function GET() {
   const { data, error } = await supabase.auth.admin.listUsers();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const users = data.users
-    .filter(userBelongsToPortal)
-    .map((u) => ({
-      id: u.id,
-      email: u.email,
-      displayName: u.user_metadata?.display_name ?? u.email?.split('@')[0] ?? 'Unknown',
-      role: (u.user_metadata?.role as string) ?? 'inspector',
-      portals: getUserPortals(u),
-      banned: u.banned_until ? new Date(u.banned_until) > new Date() : false,
-      lastSignIn: u.last_sign_in_at,
-      createdAt: u.created_at,
-    }));
+  const users = data.users.map((u) => ({
+    id: u.id,
+    email: u.email,
+    displayName:
+      (u.user_metadata?.display_name as string | undefined) ??
+      (u.user_metadata?.full_name as string | undefined) ??
+      u.email?.split('@')[0] ??
+      'Unknown',
+    role: (u.user_metadata?.role as string) ?? 'client_qa_manager',
+    portals: getUserPortals(u),
+    banned: u.banned_until ? new Date(u.banned_until) > new Date() : false,
+    lastSignIn: u.last_sign_in_at,
+    createdAt: u.created_at,
+  }));
 
   return NextResponse.json({ data: users });
 }

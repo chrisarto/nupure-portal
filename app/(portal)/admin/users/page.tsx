@@ -18,8 +18,9 @@ const ROLES = [
   { value: 'mj_admin',          label: 'MJ Admin',          desc: 'Full portal access + user management' },
   { value: 'mj_supervisor',     label: 'MJ Supervisor',     desc: 'Fill forms, view all reports, manage schedule' },
   { value: 'employee',          label: 'Employee',          desc: 'Fill in inspection forms only' },
+  { value: 'client_qa_manager', label: 'Client Manager',    desc: 'Client management access + export reports' },
+  { value: 'client_manager',    label: 'Client Manager (Legacy)', desc: 'Client management access + export reports' },
   { value: 'client_qa',         label: 'Client QA',         desc: 'Read-only access to reports and dashboard' },
-  { value: 'client_qa_manager', label: 'Client QA Manager', desc: 'Read-only access + can export reports' },
 ] as const;
 type Role = typeof ROLES[number]['value'];
 

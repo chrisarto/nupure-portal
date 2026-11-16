@@ -7,6 +7,7 @@ import {
   NUPURE_ROOMS,
   NUPURE_CHEMICALS,
   NUPURE_PROCEDURE_PDF_URL,
+  NUPURE_MANUAL_CHECKLIST_PDF_URL,
   getRoomSopInfo,
   type NuPureRoomSpec,
 } from '@/lib/nupure-scope';
@@ -449,6 +450,23 @@ export default function CleaningReportPage() {
               }}
             />
           </div>
+
+          <a
+            href={NUPURE_MANUAL_CHECKLIST_PDF_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#b45309',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '10px 16px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 800,
+            }}
+          >
+            🖨️ Printable Manual Checklist (PDF) ↗
+          </a>
 
           <a
             href={NUPURE_PROCEDURE_PDF_URL}

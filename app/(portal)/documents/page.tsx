@@ -6,7 +6,7 @@ import styles from './Documents.module.css';
 import type { TrainingDocument } from '@/lib/types';
 import { CSVExportButton } from '@/app/components/ui/CSVExportButton';
 import AttachmentLink from '@/app/components/AttachmentLink';
-import { NUPURE_PROCEDURE_PDF_URL } from '@/lib/nupure-scope';
+import { NUPURE_PROCEDURE_PDF_URL, NUPURE_MANUAL_CHECKLIST_PDF_URL } from '@/lib/nupure-scope';
 
 /* ── Cover image mapping by normalised document type ──────────── */
 const COVER_MAP: Record<string, string> = {
@@ -190,23 +190,42 @@ export default function DocumentsPage() {
             Includes Core Task SOPs (SOP-01 to SOP-08), Colour-Coded Segregation Poster (Appendix D), 29 Room Checklists + Security Building &amp; First Aid Room, Sanitary &amp; Air Freshener Registers, and Competency Controls.
           </div>
         </div>
-        <a
-          href={NUPURE_PROCEDURE_PDF_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            background: '#0284c7',
-            color: '#ffffff',
-            textDecoration: 'none',
-            padding: '11px 18px',
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 800,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          📘 View / Download Master SOP Manual (PDF) ↗
-        </a>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a
+            href={NUPURE_MANUAL_CHECKLIST_PDF_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#b45309',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '11px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 800,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🖨️ Printable Manual Checklist (PDF) ↗
+          </a>
+          <a
+            href={NUPURE_PROCEDURE_PDF_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#0284c7',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '11px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 800,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            📘 View / Download Master SOP Manual (PDF) ↗
+          </a>
+        </div>
       </div>
 
       {/* Tab bar */}

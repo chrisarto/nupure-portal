@@ -594,6 +594,29 @@ export const NUPURE_ROOMS: NuPureRoomSpec[] = [
       'Replenish toilet paper, soap, paper towels',
     ],
   },
+  {
+    id: 'prod-first-aid-room',
+    code: 'NP-PR-08',
+    zone: 'Production Areas',
+    sectionNumber: 6,
+    subGroup: 'Client-Confirmed Additional Area (SOP v1.1 Sec 5.6)',
+    room: 'First Aid Room',
+    frequencyBadge: '5 DAYS',
+    frequencyLabel: 'Monday to Friday (Per Approved Schedule — SOP v1.1 Sec 5.6)',
+    frequencyInDays: 1,
+    workstreamCode: 'WS-WEEKDAY-5D',
+    estimatedMinutes: 15,
+    workstationNote: 'BLUE general surfaces; segregated YELLOW kit for washroom/handwashing fittings',
+    checklist: [
+      'Confirm room vacant, safe to access and free of treatment activity; follow Nu-Pure restrictions',
+      'Empty ONLY clearly identified general-waste bins (leave medical, sharps, infectious or unknown waste untouched)',
+      'Wipe accessible clear general surfaces, door handles and approved furniture exteriors',
+      'Sweep and mop compatible accessible floors; place wet floor signs; leave emergency access unobstructed',
+      'Stop, secure and report any blood/body-fluid spill, used sharp, unknown waste or suspected contamination',
+    ],
+    limitations:
+      'Do not open cabinets or handle medicines, dressings, first-aid kits, examination supplies, sharps, clinical waste or confidential records.',
+  },
 
   // ── SECTION 7: DETAILED SCOPE — WAREHOUSE AREAS (7 DAYS & 5 DAYS) ─────
   {
@@ -897,6 +920,28 @@ export const NUPURE_ROOMS: NuPureRoomSpec[] = [
     ],
     limitations: 'Avoid moving paperwork, documents or personal belongings.',
   },
+  {
+    id: 'gh-security-building',
+    code: 'NP-GH-04',
+    zone: "Gatehouse & Drivers' Toilet",
+    sectionNumber: 9,
+    subGroup: 'Client-Confirmed Additional Area (SOP v1.1 Sec 5.6)',
+    room: 'Security Building',
+    frequencyBadge: '5 DAYS',
+    frequencyLabel: 'Monday to Friday (Per Approved Schedule — SOP v1.1 Sec 5.6)',
+    frequencyInDays: 1,
+    workstreamCode: 'WS-WEEKDAY-5D',
+    estimatedMinutes: 15,
+    workstationNote: 'Method SOP-01 (BLUE equipment) & SOP-02 (GREEN) for any separate tea/coffee surfaces',
+    checklist: [
+      'Empty designated general-waste bins and replace liners',
+      'Wipe clear accessible desks, service counters, doors and high-touch points',
+      'Dust accessible sills; vacuum/sweep/mop suitable flooring; keep entry, emergency and security routes open',
+      'Record completed work and any inaccessible restricted security workstations separately in the portal',
+    ],
+    limitations:
+      'Do not disturb security records, keys, radios, CCTV or alarm controls. Do not duplicate Gatehouse office service if same physical location.',
+  },
 
   // ── SECTION 10: HYGIENE SERVICES & CONSUMABLES (WEEKLY) ───────────────
   {
@@ -952,7 +997,7 @@ export const NUPURE_ROOMS: NuPureRoomSpec[] = [
 
 /* ═══════════════════════════════════════════════════════════════
    Nu-Pure Site Work Procedure & Standard Operating Procedures Manual
-   Source: MJH-SOP-NUPURE-001 (32-Page Manual — NuPure_Cleaning_Procedures.pdf)
+   Source: MJH-SOP-NUPURE-001 (Controlled v1.1 — 28 Pages — NuPure_Cleaning_Procedures.pdf)
    ═══════════════════════════════════════════════════════════════ */
 export const NUPURE_PROCEDURE_PDF_URL =
   'https://api.nupure.tmservices.cloud/storage/v1/object/public/documents/NuPure_Cleaning_Procedures.pdf';
@@ -972,90 +1017,90 @@ export const NUPURE_SOPS: NuPureSopSpec[] = [
   {
     code: 'MJH-SOP-NP-01',
     shortCode: 'SOP-01',
-    title: 'Offices, Boardrooms, Meetings, Reception & General Floor Areas',
+    title: 'Offices, Boardrooms, Meeting Rooms & General Areas',
     colourZone: 'BLUE — General Offices & Reception',
     colourHex: '#0284c7',
     colourBg: '#e0f2fe',
     summary:
-      'Use BLUE microfibre & office-only floor kit. Wipe accessible desk/table surfaces, touch points, partitions, internal glass; empty general-waste bins; vacuum carpet & sweep/mop hard floors. Never move paperwork, confidential items, or personal belongings.',
-    pageRef: 'Pages 7–8',
+      'Use BLUE cloths, vacuum & BLUE floor kit. Wipe clear and accessible work surfaces, tables, chair arms, reception counters, doors & high-touch areas; dust partitions, sills & skirtings; empty general-waste bins; vacuum/mop floors. Never move documents, devices, or personal belongings.',
+    pageRef: 'Page 7',
   },
   {
     code: 'MJH-SOP-NP-02',
     shortCode: 'SOP-02',
-    title: 'Lunchrooms, Kitchenettes, Appliances & Friday Refrigerator Interior',
+    title: 'Lunchrooms, Kitchenettes & Refrigerator Interiors',
     colourZone: 'GREEN — Food Prep & Lunchrooms',
     colourHex: '#15803d',
     colourBg: '#dcfce7',
     summary:
-      'Use GREEN cloths & food-safe non-tainting sanitiser. Clean tables, chairs, food benches, sinks, microwaves (inside/out), fridge/appliance exteriors, and Friday Production Lunchroom fridge interior (NP-PR-05) per Nu-Pure authorisation.',
-    pageRef: 'Pages 8–9',
+      'Use dedicated GREEN cloths & approved food-contact sanitiser. Clean tables, chairs, food prep tops, sinks, taps, splashbacks, microwave interior/exterior, fridge/appliance exteriors, and Friday Production Lunchroom fridge interior (NP-PR-05) per Nu-Pure authorisation.',
+    pageRef: 'Page 7',
   },
   {
     code: 'MJH-SOP-NP-03',
     shortCode: 'SOP-03',
-    title: 'Male, Female, Accessible & Unisex Amenities and Showers',
+    title: 'Toilets, Accessible Amenities & Showers',
     colourZone: 'YELLOW (Basins/Showers) & RED (Toilets/Urinals)',
     colourHex: '#dc2626',
     colourBg: '#fee2e2',
     summary:
-      'Start with YELLOW for basins, taps, mirrors, vanity benches & showers; switch to fresh RED for toilet bowls, urinals, seats, flush controls & cubicle floors. Replenish toilet paper, soap & paper towels; mop with segregated amenity floor kit.',
-    pageRef: 'Page 9',
+      'Use YELLOW kit for basins, taps, mirrors, walls, splashbacks, shower bases/walls, grab rails & doors; use separate RED equipment for toilet bowls, urinals, seats, lids, hinges, flush controls & cubicle floors. Replenish paper, soap & consumables.',
+    pageRef: 'Page 8',
   },
   {
     code: 'MJH-SOP-NP-04',
     shortCode: 'SOP-04',
-    title: 'Production Laboratory Floor & Designated General Waste ONLY',
-    colourZone: 'DEDICATED LAB FLOOR KIT (Strict Exclusion)',
+    title: 'Production Laboratory: Floor & General Waste Only',
+    colourZone: 'BLUE FLOOR KIT ONLY (Strict Lab Restriction)',
     colourHex: '#b45309',
     colourBg: '#fef3c7',
     summary:
-      'STRICT LABORATORY EXCLUSION: Empty designated general-waste bins only, dust clear window sills, and sweep/damp-mop vinyl floor. Never touch benchtops, chemicals, samples, testing equipment, sharps, or clinical waste.',
-    pageRef: 'Pages 9–10',
+      'STRICT LABORATORY RESTRICTION: Empty designated general-waste bins only, dust permitted accessible window sills, and sweep/damp-mop vinyl floor with clean BLUE floor tools. Contact with laboratory benchtops, chemicals, samples, testing equipment, sharps, or clinical waste is prohibited.',
+    pageRef: 'Page 8',
   },
   {
     code: 'MJH-SOP-NP-05',
     shortCode: 'SOP-05',
-    title: 'Managed Weekly Sanitary-Waste Service (Units SB-01 to SB-10)',
+    title: 'Weekly Sanitary Waste Service (Units SB-01 to SB-10)',
     colourZone: 'RED — Hygiene Waste Containment',
     colourHex: '#be123c',
     colourBg: '#ffe4e6',
     summary:
-      'Service units SB-01 to SB-10 weekly: seal and remove filled liner into secondary containment without compacting, fit fresh liner, disinfect interior/exterior, log unit ID in /hygiene-services, and transport via approved disposal route.',
-    pageRef: 'Page 10',
+      'Service units SB-01 to SB-10 individually: remove and secure liner without compressing, clean & disinfect interior/lid/exterior, fit clean liner, contain & transport sanitary waste for authorised off-site disposal, and record each unit ID in /hygiene-services.',
+    pageRef: 'Pages 8–9',
   },
   {
     code: 'MJH-SOP-NP-06',
     shortCode: 'SOP-06',
-    title: 'Automatic Air-Freshener Dispenser Service (Units AF-01 to AF-09)',
+    title: 'Weekly Air Freshener Dispenser Servicing (Units AF-01 to AF-09)',
     colourZone: 'HYGIENE — Managed Dispenser Units',
     colourHex: '#0f766e',
     colourBg: '#ccfbf1',
     summary:
-      'Inspect units AF-01 to AF-09 weekly: clean casing exterior, verify spray interval and canister expiry, test/replace AA batteries and fragrance refills as required, conduct safe spray check, and log in /hygiene-services.',
-    pageRef: 'Pages 10–11',
+      'Inspect units AF-01 to AF-09 weekly for secure mounting, leaks, damage, battery status, dispensing operation & spray interval; wipe external casing, replace approved fragrance canisters or AA batteries when required, and record in /hygiene-services.',
+    pageRef: 'Page 9',
   },
   {
     code: 'MJH-SOP-NP-07',
     shortCode: 'SOP-07',
-    title: 'Weekly Consumable Stocktake & Requisition (18-Line Master)',
+    title: 'Weekly Consumable Stocktake & Requisition',
     colourZone: 'STOCKTAKE — Consumables & Par Control',
     colourHex: '#4338ca',
     colourBg: '#e0e7ff',
     summary:
-      'Count physical on-hand stock across all 18 consumable lines in /stocktake, compare against agreed Par Levels, verify reorder quantities, and submit automated requisition email to Nu-Pure.',
-    pageRef: 'Page 11',
+      'Open /stocktake and count actual on-hand quantity across the Nu-Pure 18-line consumable master (toilet paper, hand towels, soap, liners & approved chemicals), verify order quantities against par levels, and submit the requisition.',
+    pageRef: 'Pages 9–10',
   },
   {
     code: 'MJH-SOP-NP-08',
     shortCode: 'SOP-08',
-    title: 'Portal Cleaning Reports, Daily Completion PDF & QR Required Actions',
+    title: 'Room-by-Room Reporting, Daily PDF & QR Action Closure',
     colourZone: 'PORTAL QA — Digital Evidence & DCR Sign-Off',
     colourHex: '#0f3460',
     colourBg: '#e2e8f0',
     summary:
-      'Log room-by-room completion in /cleaning-report immediately after inspection, record SB/AF changes in /hygiene-services, close out QR Required Actions with photo verification in /actions, and issue the Daily Completion Report PDF.',
-    pageRef: 'Pages 11–12',
+      'Tick only performed tasks in /cleaning-report after each room, attach permitted before/after photos (camera or gallery), log SB/AF work in /hygiene-services, close QR Required Actions in /actions after verification, and issue the Daily Completion PDF.',
+    pageRef: 'Page 10',
   },
 ];
 
@@ -1074,6 +1119,7 @@ const ROOM_TO_SOP_SHORT: Record<string, string> = {
   'NP-PR-05': 'SOP-02',
   'NP-PR-06': 'SOP-03',
   'NP-PR-07': 'SOP-03',
+  'NP-PR-08': 'SOP-01',
   'NP-WH-01': 'SOP-01',
   'NP-WH-02': 'SOP-02',
   'NP-WH-03': 'SOP-01',
@@ -1089,6 +1135,7 @@ const ROOM_TO_SOP_SHORT: Record<string, string> = {
   'NP-GH-01': 'SOP-03',
   'NP-GH-02': 'SOP-02',
   'NP-GH-03': 'SOP-01',
+  'NP-GH-04': 'SOP-01',
   'NP-HY-01': 'SOP-05',
   'NP-HY-02': 'SOP-06',
 };

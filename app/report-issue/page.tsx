@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { NUPURE_ROOMS } from '@/lib/nupure-scope';
+import { PhotoCaptureControl } from '@/app/components/PhotoCaptureControl';
 
 const ISSUE_CATEGORIES = [
   'Consumables Empty (Toilet Paper / Hand Towel / Soap)',
@@ -373,40 +374,15 @@ function ReportIssueForm() {
             />
           </div>
 
-          {/* Photo Upload */}
-          <div
-            style={{
-              marginBottom: 16,
-              padding: 14,
-              borderRadius: 10,
-              border: '1px dashed #94a3b8',
-              background: '#f8fafc',
-            }}
-          >
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
-              Attach Photo (Optional — Camera or Gallery)
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              multiple
-              onChange={handlePhotoUpload}
-              disabled={uploading}
-              style={{ fontSize: 13 }}
+          {/* Photo Upload (Camera OR Saved Photos) */}
+          <div style={{ marginBottom: 16 }}>
+            <PhotoCaptureControl
+              label="Attach Issue Photo (Optional)"
+              photos={photos}
+              onChange={setPhotos}
+              uploadEndpoint="/api/qr-issues/upload"
+              disabled={submitting}
             />
-            {photos.length > 0 && (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-                {photos.map((u, i) => (
-                  <img
-                    key={i}
-                    src={u}
-                    alt="Issue"
-                    style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, border: '1px solid #cbd5e1' }}
-                  />
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Reporter Details (for Completion Report) */}

@@ -111,7 +111,7 @@ export default function SanitationScopePage() {
   const countWeekly = NUPURE_ROOMS.filter(r => r.frequencyBadge === 'WEEKLY').length;
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 1440, margin: '0 auto' }}>
+    <div className="np-page">
       {/* Top Header */}
       <div
         style={{
@@ -270,10 +270,8 @@ export default function SanitationScopePage() {
 
       {/* Proposed Service Model & Weekend Arrangements (From Tender Page 3) */}
       <div
+        className="np-card-grid-2"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
-          gap: 18,
           marginBottom: 28,
         }}
       >
@@ -543,13 +541,7 @@ export default function SanitationScopePage() {
               </div>
 
               {/* 2-Column Room Scope Cards */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
-                  gap: 16,
-                }}
-              >
+              <div className="np-card-grid-2">
                 {roomsInZone.map(room => {
                   const is7Day = room.frequencyBadge === '7 DAYS';
                   const isWeekly = room.frequencyBadge === 'WEEKLY';
@@ -770,10 +762,8 @@ export default function SanitationScopePage() {
 
       {/* Section 10 Detailed Unit Register: Sanitary Bins & Automatic Air Fresheners */}
       <div
+        className="np-card-grid-2"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))',
-          gap: 20,
           marginBottom: 28,
         }}
       >
@@ -794,6 +784,8 @@ export default function SanitationScopePage() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 8,
             }}
           >
             <div>
@@ -819,26 +811,28 @@ export default function SanitationScopePage() {
               Log Bin Change →
             </Link>
           </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
-                <th style={{ padding: '8px 12px' }}>Unit</th>
-                <th style={{ padding: '8px 12px' }}>Zone</th>
-                <th style={{ padding: '8px 12px' }}>Allocated Amenity Location</th>
-              </tr>
-            </thead>
-            <tbody>
-              {NUPURE_SANITARY_BINS.map(bin => (
-                <tr key={bin.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '8px 12px', fontWeight: 800, color: '#0f3460' }}>{bin.code}</td>
-                  <td style={{ padding: '8px 12px', color: '#475569' }}>{bin.zone}</td>
-                  <td style={{ padding: '8px 12px', fontWeight: 700, color: '#0f172a' }}>
-                    {bin.location} — <span style={{ color: '#64748b', fontWeight: 500 }}>{bin.binNumber}</span>
-                  </td>
+          <div className="np-table-wrap">
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '8px 12px' }}>Unit</th>
+                  <th style={{ padding: '8px 12px' }}>Zone</th>
+                  <th style={{ padding: '8px 12px' }}>Allocated Amenity Location</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {NUPURE_SANITARY_BINS.map(bin => (
+                  <tr key={bin.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '8px 12px', fontWeight: 800, color: '#0f3460' }}>{bin.code}</td>
+                    <td style={{ padding: '8px 12px', color: '#475569' }}>{bin.zone}</td>
+                    <td style={{ padding: '8px 12px', fontWeight: 700, color: '#0f172a' }}>
+                      {bin.location} — <span style={{ color: '#64748b', fontWeight: 500 }}>{bin.binNumber}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* 9 Air Fresheners Register */}
@@ -858,6 +852,8 @@ export default function SanitationScopePage() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 8,
             }}
           >
             <div>
@@ -883,24 +879,26 @@ export default function SanitationScopePage() {
               Log Refill / Change →
             </Link>
           </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
-                <th style={{ padding: '8px 12px' }}>Code</th>
-                <th style={{ padding: '8px 12px' }}>Zone</th>
-                <th style={{ padding: '8px 12px' }}>Allocated Dispenser Location</th>
-              </tr>
-            </thead>
-            <tbody>
-              {NUPURE_AIR_FRESHENERS.map(af => (
-                <tr key={af.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '8px 12px', fontWeight: 800, color: '#0284c7' }}>{af.code}</td>
-                  <td style={{ padding: '8px 12px', color: '#475569' }}>{af.zone}</td>
-                  <td style={{ padding: '8px 12px', fontWeight: 700, color: '#0f172a' }}>{af.dispenserName}</td>
+          <div className="np-table-wrap">
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '8px 12px' }}>Code</th>
+                  <th style={{ padding: '8px 12px' }}>Zone</th>
+                  <th style={{ padding: '8px 12px' }}>Allocated Dispenser Location</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {NUPURE_AIR_FRESHENERS.map(af => (
+                  <tr key={af.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '8px 12px', fontWeight: 800, color: '#0284c7' }}>{af.code}</td>
+                    <td style={{ padding: '8px 12px', color: '#475569' }}>{af.zone}</td>
+                    <td style={{ padding: '8px 12px', fontWeight: 700, color: '#0f172a' }}>{af.dispenserName}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -928,7 +926,7 @@ export default function SanitationScopePage() {
         >
           <div>
             <div style={{ fontSize: 11.5, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Controlled Work Procedure Manual &bull; MJH-SOP-NUPURE-001 (v1.0)
+              Controlled Work Procedure Manual &bull; MJH-SOP-NUPURE-001 (Controlled Master v1.1)
             </div>
             <div style={{ fontSize: 16, fontWeight: 800, marginTop: 2 }}>
               Core Task Standard Operating Procedures (SOP-01 to SOP-08) &amp; Colour Segregation
@@ -949,7 +947,7 @@ export default function SanitationScopePage() {
               fontWeight: 800,
             }}
           >
-            📘 View / Download Full 32-Page SOP Manual (PDF) ↗
+            📘 View / Download Full 28-Page SOP Manual v1.1 (PDF) ↗
           </a>
         </div>
 
@@ -957,7 +955,7 @@ export default function SanitationScopePage() {
           style={{
             padding: 18,
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: 14,
           }}
         >
@@ -1024,13 +1022,7 @@ export default function SanitationScopePage() {
       </div>
 
       {/* Section 11 (Equipment & PPE) & Section 16 (Exclusions & Clarifications) */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
-          gap: 20,
-        }}
-      >
+      <div className="np-card-grid-2">
         <div
           style={{
             background: '#ffffff',

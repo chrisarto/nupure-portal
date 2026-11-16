@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { PhotoCaptureControl } from '@/app/components/PhotoCaptureControl';
 
 interface QrIssue {
   id: string;
@@ -384,29 +385,13 @@ export default function RequiredActionsPage() {
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
-              Upload Post-Rectification / Verification Photo(s) ({completionPhotos.length})
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleUploadCompletionPhoto}
-              disabled={uploading}
-              style={{ fontSize: 13 }}
+            <PhotoCaptureControl
+              label="Post-Rectification / Verification Photo(s)"
+              photos={completionPhotos}
+              onChange={setCompletionPhotos}
+              uploadEndpoint="/api/qr-issues/upload"
+              disabled={submitting}
             />
-            {completionPhotos.length > 0 && (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-                {completionPhotos.map((u, i) => (
-                  <img
-                    key={i}
-                    src={u}
-                    alt="Completion"
-                    style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 6, border: '1px solid #16a34a' }}
-                  />
-                ))}
-              </div>
-            )}
           </div>
 
           <button

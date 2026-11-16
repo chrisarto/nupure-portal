@@ -181,13 +181,13 @@ export default function DocumentsPage() {
       >
         <div>
           <div style={{ fontSize: 11.5, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Controlled Site Work Procedure &amp; SOP Manual &bull; MJH-SOP-NUPURE-001 (v1.0)
+            Controlled Site Work Procedure &amp; SOP Manual &bull; MJH-SOP-NUPURE-001 (Controlled Master v1.1)
           </div>
           <div style={{ fontSize: 17, fontWeight: 800, marginTop: 4 }}>
-            Nu-Pure Beverages — Site Work Procedure &amp; Standard Operating Procedures Manual (32 Pages)
+            Nu-Pure Beverages — Site Work Procedure &amp; Standard Operating Procedures Manual (v1.1 — 28 Pages)
           </div>
           <div style={{ fontSize: 13, color: '#cbd5e1', marginTop: 3 }}>
-            Includes Core Task SOPs (SOP-01 to SOP-08), Colour-Coded Segregation Matrix, 29 Room Checklists, Sanitary &amp; Air Freshener Registers, and Shift Run Sheets.
+            Includes Core Task SOPs (SOP-01 to SOP-08), Colour-Coded Segregation Poster (Appendix D), 29 Room Checklists + Security Building &amp; First Aid Room, Sanitary &amp; Air Freshener Registers, and Competency Controls.
           </div>
         </div>
         <a

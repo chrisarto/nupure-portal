@@ -6,6 +6,7 @@ import {
   NUPURE_SANITARY_BINS,
   NUPURE_AIR_FRESHENERS,
 } from '@/lib/nupure-scope';
+import { enqueueOfflineCleaningReport } from '@/lib/offline-cleaning-db';
 
 interface SanitaryUnitState {
   serviced: boolean;
@@ -137,43 +138,59 @@ export default function HygieneServicesPage() {
       });
 
       const servicedCount = checklistItems.filter(i => i.completed).length;
-      const res = await fetch('/api/cleaning-records', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: serviceDate,
-          zone: 'Hygiene Services & Consumables',
-          location: 'Sanitary Waste Management (8–10 Bins)',
-          frequency_badge: 'WEEKLY',
-          checklist_items: checklistItems,
-          items_cleaned: `Serviced ${servicedCount}/${NUPURE_SANITARY_BINS.length} Sanitary Waste Units (Liners replaced, units sanitised, weekly waste collection & off-site disposal)`,
-          total_time_minutes: 30,
-          shift_type: 'Weekly Managed Sanitary Service',
-          cleaning_type: 'Sanitary Bin Liner Exchange & Waste Collection',
-          chemicals_used: ['Hospital-Grade Disinfectant / Surface Sanitiser', 'Odour Neutraliser / Enzyme Bio-Cleaner'],
-          operators_involved: [technicianName],
-          ssop_verified: true,
-          visual_inspection_passed: true,
-          comments: notes || `All ${servicedCount} allocated sanitary bins serviced, relined, and disinfected by MJ Hygiene external hygiene team.`,
-          submitted_by: technicianName,
-          supervisor_signoff: supervisorName,
-        }),
-      });
+      const sbPayload = {
+        date: serviceDate,
+        zone: 'Hygiene Services & Consumables',
+        location: 'Sanitary Waste Management (8–10 Bins)',
+        frequency_badge: 'WEEKLY',
+        checklist_items: checklistItems,
+        total_time_minutes: 30,
+        shift_type: 'Weekly Managed Sanitary Service',
+        cleaning_type: 'Sanitary Bin Liner Exchange & Waste Collection',
+        chemicals_used: ['Hospital-Grade Disinfectant / Surface Sanitiser', 'Odour Neutraliser / Enzyme Bio-Cleaner'],
+        operators_involved: [technicianName],
+        supervisor_signoff: supervisorName,
+        visual_inspection_passed: true,
+        ssop_verified: true,
+        sanitary_bin_changed: true,
+        air_freshener_changed: false,
+        comments: notes || `All ${servicedCount} allocated sanitary bins serviced, relined, and disinfected by MJ Hygiene external hygiene team.`,
+        corrective_actions: '',
+        before_photos: [] as string[],
+        after_photos: [] as string[],
+        submitted_by: technicianName,
+        schedule_event_id: 'ev_hyg-sanitary-waste',
+      };
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to save Sanitary Bin service log');
+      try {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          throw new Error('OFFLINE_MODE');
+        }
+        const res = await fetch('/api/cleaning-records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...sbPayload,
+            items_cleaned: `Serviced ${servicedCount}/${NUPURE_SANITARY_BINS.length} Sanitary Waste Units (Liners replaced, units sanitised, weekly waste collection & off-site disposal)`,
+          }),
+        });
 
-      await loadHistory();
-      setToast({
-        type: 'success',
-        text: `Sanitary Bin Service & Liner Changes (${servicedCount}/10 bins) logged (${json.data.report_number}) & added to Daily Completion Report PDF!`,
-        reportId: json.data.id,
-      });
-    } catch (err) {
-      setToast({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Error saving Sanitary Bin service log',
-      });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to save Sanitary Bin service log');
+
+        await loadHistory();
+        setToast({
+          type: 'success',
+          text: `Sanitary Bin Service & Liner Changes (${servicedCount}/10 bins) logged (${json.data.report_number}) & added to Daily Completion Report PDF!`,
+          reportId: json.data.id,
+        });
+      } catch {
+        await enqueueOfflineCleaningReport('NP-HY-01', sbPayload);
+        setToast({
+          type: 'success',
+          text: `⚡ Sanitary Bin Service (${servicedCount}/10 bins) saved to Offline Queue & will auto-sync when online!`,
+        });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -202,52 +219,68 @@ export default function HygieneServicesPage() {
       const refillsCount = Object.values(afState).filter(s => s.serviced && s.refillChanged).length;
       const batteriesCount = Object.values(afState).filter(s => s.serviced && s.batteriesChanged).length;
 
-      const res = await fetch('/api/cleaning-records', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: serviceDate,
-          zone: 'Hygiene Services & Consumables',
-          location: 'Automatic Air Freshener Units (9 Dispensers)',
-          frequency_badge: 'WEEKLY',
-          checklist_items: checklistItems,
-          items_cleaned: `Serviced ${servicedCount}/9 Auto Air Fresheners (${refillsCount} fragrance refills changed, ${batteriesCount} battery sets replaced, exterior cleaned)`,
-          total_time_minutes: 25,
-          shift_type: 'Managed Air Freshener Service',
-          cleaning_type: 'Automatic Air Freshener Refill & Battery Change',
-          chemicals_used: ['Hospital-Grade Disinfectant / Surface Sanitiser'],
-          operators_involved: [technicianName],
-          ssop_verified: true,
-          visual_inspection_passed: true,
-          comments:
-            notes ||
-            `Serviced ${servicedCount}/9 automatic air freshener dispensers (${refillsCount} refills changed, ${batteriesCount} battery sets changed).`,
-          submitted_by: technicianName,
-          supervisor_signoff: supervisorName,
-        }),
-      });
+      const afPayload = {
+        date: serviceDate,
+        zone: 'Hygiene Services & Consumables',
+        location: 'Automatic Air Freshener Units (9 Dispensers)',
+        frequency_badge: 'WEEKLY',
+        checklist_items: checklistItems,
+        total_time_minutes: 25,
+        shift_type: 'Managed Air Freshener Service',
+        cleaning_type: 'Automatic Air Freshener Refill & Battery Change',
+        chemicals_used: ['Hospital-Grade Disinfectant / Surface Sanitiser'],
+        operators_involved: [technicianName],
+        supervisor_signoff: supervisorName,
+        visual_inspection_passed: true,
+        ssop_verified: true,
+        sanitary_bin_changed: false,
+        air_freshener_changed: true,
+        comments:
+          notes ||
+          `Serviced ${servicedCount}/9 automatic air freshener dispensers (${refillsCount} refills changed, ${batteriesCount} battery sets changed).`,
+        corrective_actions: '',
+        before_photos: [] as string[],
+        after_photos: [] as string[],
+        submitted_by: technicianName,
+        schedule_event_id: 'ev_hyg-air-fresheners',
+      };
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to save Air Freshener service log');
+      try {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          throw new Error('OFFLINE_MODE');
+        }
+        const res = await fetch('/api/cleaning-records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...afPayload,
+            items_cleaned: `Serviced ${servicedCount}/9 Auto Air Fresheners (${refillsCount} fragrance refills changed, ${batteriesCount} battery sets replaced, exterior cleaned)`,
+          }),
+        });
 
-      await loadHistory();
-      setToast({
-        type: 'success',
-        text: `Air Freshener Changes (${servicedCount}/9 dispensers, ${refillsCount} refills) logged (${json.data.report_number}) & added to Daily Completion Report PDF!`,
-        reportId: json.data.id,
-      });
-    } catch (err) {
-      setToast({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Error saving Air Freshener service log',
-      });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to save Air Freshener service log');
+
+        await loadHistory();
+        setToast({
+          type: 'success',
+          text: `Air Freshener Changes (${servicedCount}/9 dispensers, ${refillsCount} refills) logged (${json.data.report_number}) & added to Daily Completion Report PDF!`,
+          reportId: json.data.id,
+        });
+      } catch {
+        await enqueueOfflineCleaningReport('NP-HY-02', afPayload);
+        setToast({
+          type: 'success',
+          text: `⚡ Air Freshener Service (${servicedCount}/9 dispensers) saved to Offline Queue & will auto-sync when online!`,
+        });
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 1400, margin: '0 auto' }}>
+    <div className="np-page">
       {/* Header */}
       <div
         style={{

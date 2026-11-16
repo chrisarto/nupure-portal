@@ -96,3 +96,74 @@ button {
 .skeleton-card {
   height: 120px;
 }
+
+/* ── Mobile & iPad Responsive Layout Utilities ─────────────────── */
+.np-page {
+  padding: 28px 32px;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.np-cleaning-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 390px) 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.np-mobile-room-bar {
+  display: none;
+}
+
+.np-card-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 16px;
+}
+
+.np-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1024px) {
+  .np-page {
+    padding: 16px 14px;
+  }
+
+  .np-cleaning-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .np-mobile-room-bar {
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  .np-card-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .np-page {
+    padding: 10px 6px;
+  }
+
+  .np-card-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  input[type="email"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

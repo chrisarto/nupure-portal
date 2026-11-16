@@ -115,14 +115,19 @@
 .mobileToggle {
   display: none;
   position: fixed;
-  top: 1rem;
+  top: 0.85rem;
   right: 1rem;
   z-index: 50;
   background: var(--bg-card);
   border: 1px solid var(--border-default);
-  padding: 0.5rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.6rem;
   border-radius: var(--radius-md);
   cursor: pointer;
+  align-items: center;
+  justify-content: center;
 }
 
 .overlay {
@@ -135,20 +140,14 @@
 
 @media (max-width: 1024px) {
   .sidebar {
-    width: 220px;
-  }
-}
-
-@media (max-width: 768px) {
-  .sidebar {
     transform: translateX(-100%);
-    width: 260px;
+    width: 270px;
   }
   .open {
     transform: translateX(0);
   }
   .mobileToggle {
-    display: block;
+    display: flex;
   }
   .overlay {
     display: block;

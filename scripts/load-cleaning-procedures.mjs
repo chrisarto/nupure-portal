@@ -23,10 +23,10 @@ const PDF_LOCAL_PATH = path.resolve('public/docs/NuPure_Cleaning_Procedures.pdf'
 const PROCEDURES_TO_LOAD = [
   {
     code: 'MJH-SOP-NUPURE-001',
-    longName: 'Nu-Pure Beverages — Site Work Procedure & Standard Operating Procedures Manual (Master Manual)',
+    longName: 'Nu-Pure Beverages — Site Work Procedure & Standard Operating Procedures Manual (Controlled Master v1.1)',
     docType: 'Work Method Statement',
     status: 'Control Document',
-    version: 1.0,
+    version: 1.1,
     areas: [
       'Head Office',
       'Production Areas',
@@ -38,10 +38,10 @@ const PROCEDURES_TO_LOAD = [
   },
   {
     code: 'MJH-SOP-NP-01',
-    longName: 'SOP-01 — Offices, Boardrooms, Meetings, Reception & General Floor Areas (BLUE Zone)',
+    longName: 'SOP-01 — Offices, Boardrooms, Meeting Rooms & General Areas (BLUE Zone)',
     docType: 'Work Method Statement',
     status: 'Control Document',
-    version: 1.0,
+    version: 1.1,
     areas: [
       'Head Office',
       'Production Areas',
@@ -52,10 +52,10 @@ const PROCEDURES_TO_LOAD = [
   },
   {
     code: 'MJH-SOP-NP-02',
-    longName: 'SOP-02 — Lunchrooms, Kitchenettes, Appliances & Friday Refrigerator Interior (GREEN Zone)',
+    longName: 'SOP-02 — Lunchrooms, Kitchenettes & Refrigerator Interiors (GREEN Zone)',
     docType: 'Work Method Statement',
     status: 'Control Document',
-    version: 1.0,
+    version: 1.1,
     areas: [
       'Head Office',
       'Production Areas',
@@ -66,10 +66,10 @@ const PROCEDURES_TO_LOAD = [
   },
   {
     code: 'MJH-SOP-NP-03',
-    longName: 'SOP-03 — Male, Female, Accessible & Unisex Amenities and Showers (RED / YELLOW Zone)',
+    longName: 'SOP-03 — Toilets, Accessible Amenities & Showers (RED / YELLOW Zone)',
     docType: 'Work Method Statement',
     status: 'Control Document',
-    version: 1.0,
+    version: 1.1,
     areas: [
       'Head Office',
       'Production Areas',
@@ -80,18 +80,18 @@ const PROCEDURES_TO_LOAD = [
   },
   {
     code: 'MJH-SOP-NP-04',
-    longName: 'SOP-04 — Production Laboratory Floor & Designated General Waste ONLY (Strict Lab Exclusion)',
+    longName: 'SOP-04 — Production Laboratory: Floor & General Waste Only (Strict Lab Restriction)',
     docType: 'Work Method Statement',
     status: 'Control Document',
-    version: 1.0,
+    version: 1.1,
     areas: ['Production Areas'],
   },
   {
     code: 'MJH-SOP-NP-05',
-    longName: 'SOP-05 — Managed Weekly Sanitary-Waste Service (Units SB-01 to SB-10)',
+    longName: 'SOP-05 — Weekly Sanitary Waste Service (Units SB-01 to SB-10)',
     docType: 'Work Method Statement',
     status: 'Control Document',
-    version: 1.0,
+    version: 1.1,
     areas: [
       'Hygiene Services & Consumables',
       'Head Office',
@@ -103,10 +103,10 @@ const PROCEDURES_TO_LOAD = [
   },
   {
     code: 'MJH-SOP-NP-06',
-    longName: 'SOP-06 — Automatic Air-Freshener Dispenser Service (Units AF-01 to AF-09)',
+    longName: 'SOP-06 — Weekly Air Freshener Dispenser Servicing (Units AF-01 to AF-09)',
     docType: 'Work Method Statement',
     status: 'Control Document',
-    version: 1.0,
+    version: 1.1,
     areas: [
       'Hygiene Services & Consumables',
       'Head Office',
@@ -121,15 +121,15 @@ const PROCEDURES_TO_LOAD = [
     longName: 'SOP-07 — Weekly Consumable Stocktake & Requisition (18-Line Master)',
     docType: 'Work Method Statement',
     status: 'Control Document',
-    version: 1.0,
+    version: 1.1,
     areas: ['Hygiene Services & Consumables'],
   },
   {
     code: 'MJH-SOP-NP-08',
-    longName: 'SOP-08 — Portal Cleaning Reports, Daily Completion PDF & QR Required Actions',
+    longName: 'SOP-08 — Room-by-Room Reporting, Daily PDF & QR Action Closure',
     docType: 'Work Method Statement',
     status: 'Control Document',
-    version: 1.0,
+    version: 1.1,
     areas: [
       'Head Office',
       'Production Areas',
@@ -157,6 +157,7 @@ const ROOM_SOP_MAP = {
   'NP-PR-05': 'MJH-SOP-NP-02',
   'NP-PR-06': 'MJH-SOP-NP-03',
   'NP-PR-07': 'MJH-SOP-NP-03',
+  'NP-PR-08': 'MJH-SOP-NP-01',
   'NP-WH-01': 'MJH-SOP-NP-01',
   'NP-WH-02': 'MJH-SOP-NP-02',
   'NP-WH-03': 'MJH-SOP-NP-01',
@@ -172,6 +173,7 @@ const ROOM_SOP_MAP = {
   'NP-GH-01': 'MJH-SOP-NP-03',
   'NP-GH-02': 'MJH-SOP-NP-02',
   'NP-GH-03': 'MJH-SOP-NP-01',
+  'NP-GH-04': 'MJH-SOP-NP-01',
   'NP-HY-01': 'MJH-SOP-NP-05',
   'NP-HY-02': 'MJH-SOP-NP-06',
 };
@@ -255,7 +257,7 @@ async function upsertAirtableProcedures(publicPdfUrl) {
       'Status': proc.status,
       'Version Number': proc.version,
       'Date Created': '2026-11-10',
-      'Reviewed Date': '2026-11-10',
+      'Reviewed Date': '2026-11-12',
       'Review Period (years)': 1,
       'Re-Training Frequency': 1,
       'Requires Practical': true,
@@ -429,7 +431,109 @@ async function linkProceduresToSanitationTasks(storagePath, pdfSize) {
     });
     if (!upRes.ok) throw new Error(`nupure_sanitation_tasks update failed: ${await upRes.text()}`);
   }
-  console.log(`   ✓ Linked ${updatedRows.length} Sanitation Tasks to NuPure_Cleaning_Procedures.pdf`);
+
+  // Also ensure the two v1.1 Section 5.6 rooms (First Aid Room NP-PR-08 & Security Building NP-GH-04) are in nupure_sanitation_tasks & nupure_schedule_events
+  const today = new Date().toISOString().slice(0, 10);
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  const v11ExtraRooms = [
+    {
+      id: 'prod-first-aid-room',
+      code: 'NP-PR-08',
+      zone: 'Production Areas',
+      room: 'First Aid Room',
+      freq: 'Monday to Friday (Per Approved Schedule — SOP v1.1 Sec 5.6)',
+      checklist: [
+        'Confirm room vacant, safe to access and free of treatment activity; follow Nu-Pure restrictions',
+        'Empty ONLY clearly identified general-waste bins (leave medical, sharps, infectious or unknown waste untouched)',
+        'Wipe accessible clear general surfaces, door handles and approved furniture exteriors',
+        'Sweep and mop compatible accessible floors; place wet floor signs; leave emergency access unobstructed',
+        'Stop, secure and report any blood/body-fluid spill, used sharp, unknown waste or suspected contamination',
+      ],
+    },
+    {
+      id: 'gh-security-building',
+      code: 'NP-GH-04',
+      zone: "Gatehouse & Drivers' Toilet",
+      room: 'Security Building',
+      freq: 'Monday to Friday (Per Approved Schedule — SOP v1.1 Sec 5.6)',
+      checklist: [
+        'Empty designated general-waste bins and replace liners',
+        'Wipe clear accessible desks, service counters, doors and high-touch points',
+        'Dust accessible sills; vacuum/sweep/mop suitable flooring; keep entry, emergency and security routes open',
+        'Record completed work and any inaccessible restricted security workstations separately in the portal',
+      ],
+    },
+  ];
+
+  const extraTaskRows = v11ExtraRooms.map(r => ({
+    airtable_id: `task_${r.id}`,
+    data: {
+      'Cleaning Task': r.checklist.join(' • '),
+      'Area': r.zone,
+      'Area 2': r.room,
+      'Department': r.zone,
+      'Asset / Element': r.room,
+      'Cleaning Frequency': r.freq,
+      'Frequency in days': 1,
+      'Permit Requirement': 'Exclusion Applies — See Scope v1.1 Sec 5.6',
+      'DOC_Gotzinger': r.code,
+      'Area Group': r.zone,
+      'Procedure Document': [
+        {
+          id: `att_sop_${r.code}`,
+          url: `supabase-storage://${storagePath}`,
+          storagePath,
+          filename: `MJH-SOP-NP-01 — NuPure_Cleaning_Procedures.pdf`,
+          size: pdfSize,
+          type: 'application/pdf',
+        },
+      ],
+      'SOP Reference': 'MJH-SOP-NP-01',
+      'Master Manual': 'MJH-SOP-NUPURE-001',
+      'Procedure Sign Off': `/cleaning-report?room=${encodeURIComponent(r.room)}`,
+    },
+    synced_at: new Date().toISOString(),
+  }));
+
+  const extraSchedRows = v11ExtraRooms.map(r => ({
+    airtable_id: `ev_${r.id}`,
+    data: {
+      'Event ID': r.code,
+      'Notes': r.freq,
+      'Assignee': 'MJ Hygiene Site Team',
+      'Status': 'Completed',
+      'Cleaning Task (from Cleaning Task)': [r.checklist.join(' • ')],
+      'Area (from Cleaning Task)': [r.zone],
+      'Area 2 (from Cleaning Task)': [r.room],
+      'Department (from Cleaning Task)': [r.zone],
+      'Asset / Element (from Cleaning Task)': [r.room],
+      'Cleaning Frequency (from Cleaning Task)': [r.freq],
+      'Last Cleaning Date': today,
+      'Actual Completion Date': today,
+      'Next Clean Date': tomorrow,
+      'Days Until Due': 1,
+      'Week Number': 46,
+      'Full Name (from Employees)': ['MJ Hygiene Site Team'],
+      'Comments': 'Client-Confirmed Additional Cleaning Area — SOP v1.1 Section 5.6',
+      'Report': [],
+      'Pre-clean photo 1': [],
+      'Post Cleaning Photo 1': [],
+    },
+    synced_at: new Date().toISOString(),
+  }));
+
+  await fetch(`${SUPABASE_URL}/rest/v1/nupure_sanitation_tasks`, {
+    method: 'POST',
+    headers: { ...SB_HEADERS, Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(extraTaskRows),
+  });
+  await fetch(`${SUPABASE_URL}/rest/v1/nupure_schedule_events`, {
+    method: 'POST',
+    headers: { ...SB_HEADERS, Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(extraSchedRows),
+  });
+
+  console.log(`   ✓ Linked ${updatedRows.length + extraTaskRows.length} Sanitation Tasks (including v1.1 Sec 5.6 rooms) to NuPure_Cleaning_Procedures.pdf`);
 }
 
 async function linkStaffTrainingRecords(airtableProcedures, publicPdfUrl, storagePath, pdfSize) {
@@ -546,13 +650,78 @@ async function linkStaffTrainingRecords(airtableProcedures, publicPdfUrl, storag
   }
 }
 
+async function provisionStaffUser() {
+  console.log('\n6. Provisioning Staff Login (staff@mjhygiene.com.au) in Supabase Auth...');
+  const email = 'staff@mjhygiene.com.au';
+  const password = 'BetterHygiene!01';
+  const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+    headers: SB_HEADERS,
+  });
+  const listJson = listRes.ok ? await listRes.json() : { users: [] };
+  const existing = (listJson.users || []).find(
+    u => (u.email || '').toLowerCase() === email.toLowerCase()
+  );
+
+  if (existing) {
+    const updRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${existing.id}`, {
+      method: 'PUT',
+      headers: SB_HEADERS,
+      body: JSON.stringify({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          role: 'mj_supervisor',
+          full_name: 'MJ Hygiene Site Staff',
+        },
+      }),
+    });
+    if (!updRes.ok) throw new Error(`Failed to update ${email}: ${await updRes.text()}`);
+    console.log(`   ✓ Updated existing staff user [${existing.id}]: ${email}`);
+  } else {
+    const createRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: SB_HEADERS,
+      body: JSON.stringify({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          role: 'mj_supervisor',
+          full_name: 'MJ Hygiene Site Staff',
+        },
+      }),
+    });
+    if (!createRes.ok) throw new Error(`Failed to create ${email}: ${await createRes.text()}`);
+    const created = await createRes.json();
+    console.log(`   ✓ Created staff user [${created.id}]: ${email}`);
+  }
+
+  // Verify password login
+  const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || SERVICE_KEY;
+  const loginRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: ANON_KEY,
+    },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!loginRes.ok) {
+    throw new Error(`Staff login verification failed: ${await loginRes.text()}`);
+  }
+  const loginJson = await loginRes.json();
+  console.log(`   ✓ Verified password login for ${email} (User ID: ${loginJson.user?.id})`);
+}
+
 async function main() {
   const { publicPdfUrl, storagePath, size } = await ensurePublicStorageAndUploadPdf();
   const airtableProcedures = await upsertAirtableProcedures(publicPdfUrl);
   await syncAllNuPureDocsToSupabase(storagePath, size);
   await linkProceduresToSanitationTasks(storagePath, size);
   await linkStaffTrainingRecords(airtableProcedures, publicPdfUrl, storagePath, size);
-  console.log('\n✅ Completed loading NuPure_Cleaning_Procedures.pdf into Supabase Storage, Airtable, and Supabase DB!');
+  await provisionStaffUser();
+  console.log('\n✅ Completed loading NuPure_Cleaning_Procedures.pdf v1.1 + provisioning staff@mjhygiene.com.au!');
 }
 
 main().catch(err => {

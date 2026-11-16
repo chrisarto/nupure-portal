@@ -10,6 +10,19 @@ import {
   getRoomSopInfo,
   type NuPureRoomSpec,
 } from '@/lib/nupure-scope';
+import {
+  saveRoomDraft,
+  getRoomDraft,
+  deleteRoomDraft,
+  enqueueOfflineCleaningReport,
+  getPendingCleaningReports,
+  syncPendingCleaningReports,
+  saveCachedDailyRecords,
+  getCachedDailyRecords,
+  type QueuedCleaningReport,
+  type CleaningReportPayload,
+} from '@/lib/offline-cleaning-db';
+import { PhotoCaptureControl } from '@/app/components/PhotoCaptureControl';
 
 interface CleaningRecordRow {
   id: string;
@@ -22,6 +35,7 @@ interface CleaningRecordRow {
   visual_inspection_passed: boolean;
   submitted_by: string;
   created_at: string;
+  isOfflineQueued?: boolean;
 }
 
 export default function CleaningReportPage() {
@@ -47,54 +61,168 @@ export default function CleaningReportPage() {
   const [correctiveAction, setCorrectiveAction] = useState<string>('');
   const [beforePhotos, setBeforePhotos] = useState<string[]>([]);
   const [afterPhotos, setAfterPhotos] = useState<string[]>([]);
-  const [uploadingPhoto, setUploadingPhoto] = useState<boolean>(false);
 
   const [todayRecords, setTodayRecords] = useState<CleaningRecordRow[]>([]);
+  const [pendingOfflineQueue, setPendingOfflineQueue] = useState<QueuedCleaningReport[]>([]);
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [syncingOffline, setSyncingOffline] = useState<boolean>(false);
   const [loadingRecords, setLoadingRecords] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string; reportId?: string } | null>(null);
+  const [draftHydrated, setDraftHydrated] = useState<boolean>(false);
+
+  const refreshPendingQueue = useCallback(async () => {
+    const queued = await getPendingCleaningReports();
+    setPendingOfflineQueue(queued);
+  }, []);
 
   const loadRecordsForDate = useCallback(async (dateStr: string) => {
     setLoadingRecords(true);
     try {
       const res = await fetch(`/api/cleaning-records?date=${encodeURIComponent(dateStr)}`);
-      const json = await res.json();
-      setTodayRecords(json.data ?? []);
+      if (!res.ok) throw new Error('Network error');
+      const json = (await res.json()) as { data?: CleaningRecordRow[] };
+      const rows = json.data ?? [];
+      setTodayRecords(rows);
+      await saveCachedDailyRecords(dateStr, rows);
     } catch {
-      setTodayRecords([]);
+      const cached = await getCachedDailyRecords(dateStr);
+      setTodayRecords(cached);
     } finally {
       setLoadingRecords(false);
     }
   }, []);
 
+  const handleSyncOfflineQueue = useCallback(async () => {
+    setSyncingOffline(true);
+    try {
+      const { synced, remaining } = await syncPendingCleaningReports();
+      await refreshPendingQueue();
+      await loadRecordsForDate(selectedDate);
+      if (synced > 0) {
+        setToast({
+          type: 'success',
+          text: `✓ Synced ${synced} offline room report${synced === 1 ? '' : 's'} to the Nu-Pure Portal${remaining > 0 ? ` (${remaining} remaining)` : '!'}`,
+        });
+      }
+    } finally {
+      setSyncingOffline(false);
+    }
+  }, [refreshPendingQueue, loadRecordsForDate, selectedDate]);
+
   useEffect(() => {
-    loadRecordsForDate(selectedDate);
+    setIsOnline(typeof navigator !== 'undefined' ? navigator.onLine : true);
+    void refreshPendingQueue();
+
+    const onOnline = () => {
+      setIsOnline(true);
+      void handleSyncOfflineQueue();
+    };
+    const onOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, [refreshPendingQueue, handleSyncOfflineQueue]);
+
+  useEffect(() => {
+    void loadRecordsForDate(selectedDate);
   }, [selectedDate, loadRecordsForDate]);
 
-  // Reset checklist when room changes
-  const handleSelectRoom = (room: NuPureRoomSpec) => {
+  // Reset or restore draft from IndexedDB when room changes
+  const handleSelectRoom = useCallback(async (room: NuPureRoomSpec, dateOverride?: string) => {
+    const activeDate = dateOverride ?? selectedDate;
+    setDraftHydrated(false);
     setSelectedRoom(room);
-    const allChecked: Record<number, boolean> = {};
-    room.checklist.forEach((_, idx) => {
-      allChecked[idx] = true;
-    });
-    setCheckedItems(allChecked);
-    setTimeMinutes(room.estimatedMinutes);
-    setSanitaryBinChanged(false);
-    setAirFreshenerChanged(false);
-    setComments('');
-    setCorrectiveAction('');
-    setBeforePhotos([]);
-    setAfterPhotos([]);
     setToast(null);
-  };
+
+    const savedDraft = await getRoomDraft(activeDate, room.code);
+    if (savedDraft) {
+      setCheckedItems(savedDraft.checkedItems);
+      setShiftType(savedDraft.shiftType);
+      setTimeMinutes(savedDraft.timeMinutes);
+      setOperatorName(savedDraft.operatorName);
+      setSupervisorName(savedDraft.supervisorName);
+      setSelectedChemicals(savedDraft.selectedChemicals);
+      setVisualPassed(savedDraft.visualPassed);
+      setSsopVerified(savedDraft.ssopVerified);
+      setSanitaryBinChanged(savedDraft.sanitaryBinChanged);
+      setAirFreshenerChanged(savedDraft.airFreshenerChanged);
+      setComments(savedDraft.comments);
+      setCorrectiveAction(savedDraft.correctiveAction);
+      setBeforePhotos(savedDraft.beforePhotos);
+      setAfterPhotos(savedDraft.afterPhotos);
+    } else {
+      const allChecked: Record<number, boolean> = {};
+      room.checklist.forEach((_, idx) => {
+        allChecked[idx] = true;
+      });
+      setCheckedItems(allChecked);
+      setTimeMinutes(room.estimatedMinutes);
+      setSanitaryBinChanged(false);
+      setAirFreshenerChanged(false);
+      setComments('');
+      setCorrectiveAction('');
+      setBeforePhotos([]);
+      setAfterPhotos([]);
+    }
+    setDraftHydrated(true);
+  }, [selectedDate]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const roomParam = params.get('room');
     const matched = roomParam ? NUPURE_ROOMS.find(r => r.room === roomParam) : undefined;
-    handleSelectRoom(matched ?? NUPURE_ROOMS[0]);
-  }, []);
+    void handleSelectRoom(matched ?? NUPURE_ROOMS[0]);
+  }, [handleSelectRoom]);
+
+  // Auto-save room draft to IndexedDB whenever checklist or fields change
+  useEffect(() => {
+    if (!draftHydrated) return;
+    void saveRoomDraft({
+      draftKey: `${selectedDate}::${selectedRoom.code}`,
+      date: selectedDate,
+      roomCode: selectedRoom.code,
+      checkedItems,
+      shiftType,
+      timeMinutes,
+      operatorName,
+      supervisorName,
+      selectedChemicals,
+      visualPassed,
+      ssopVerified,
+      sanitaryBinChanged,
+      airFreshenerChanged,
+      comments,
+      correctiveAction,
+      beforePhotos,
+      afterPhotos,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [
+    draftHydrated,
+    selectedDate,
+    selectedRoom.code,
+    checkedItems,
+    shiftType,
+    timeMinutes,
+    operatorName,
+    supervisorName,
+    selectedChemicals,
+    visualPassed,
+    ssopVerified,
+    sanitaryBinChanged,
+    airFreshenerChanged,
+    comments,
+    correctiveAction,
+    beforePhotos,
+    afterPhotos,
+  ]);
 
   const toggleChemical = (chem: string) => {
     setSelectedChemicals(prev =>
@@ -102,102 +230,105 @@ export default function CleaningReportPage() {
     );
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'before' | 'after') => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    setUploadingPhoto(true);
-    try {
-      for (const file of Array.from(files)) {
-        const fd = new FormData();
-        fd.append('file', file);
-        const res = await fetch('/api/cleaning-records/upload', { method: 'POST', body: fd });
-        const json = await res.json();
-        if (res.ok && json.url) {
-          if (type === 'before') setBeforePhotos(prev => [...prev, json.url]);
-          else setAfterPhotos(prev => [...prev, json.url]);
-        }
-      }
-    } finally {
-      setUploadingPhoto(false);
-      e.target.value = '';
-    }
-  };
-
   const handleSubmitRoomReport = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setToast(null);
+
+    const checklistPayload = selectedRoom.checklist.map((label, idx) => ({
+      label,
+      completed: !!checkedItems[idx],
+    }));
+    if (sanitaryBinChanged) {
+      checklistPayload.push({
+        label: 'Sanitary Bin Liner Replaced, Unit Sanitised & Waste Collected',
+        completed: true,
+      });
+    }
+    if (airFreshenerChanged) {
+      checklistPayload.push({
+        label: 'Automatic Air Freshener Refill / Battery Changed & Spray Checked',
+        completed: true,
+      });
+    }
+
+    const reportPayload: CleaningReportPayload = {
+      date: selectedDate,
+      zone: selectedRoom.zone,
+      location: selectedRoom.room,
+      frequency_badge: selectedRoom.frequencyBadge,
+      checklist_items: checklistPayload,
+      total_time_minutes: timeMinutes,
+      shift_type: shiftType,
+      cleaning_type:
+        selectedRoom.frequencyBadge === 'WEEKLY'
+          ? 'Weekly Hygiene Service'
+          : 'Scheduled Daily Hygiene Clean',
+      chemicals_used: selectedChemicals,
+      operators_involved: operatorName
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean),
+      supervisor_signoff: supervisorName,
+      visual_inspection_passed: visualPassed,
+      ssop_verified: ssopVerified,
+      sanitary_bin_changed: sanitaryBinChanged,
+      air_freshener_changed: airFreshenerChanged,
+      comments,
+      corrective_actions: correctiveAction,
+      before_photos: beforePhotos,
+      after_photos: afterPhotos,
+      submitted_by: operatorName,
+      schedule_event_id: `ev_${selectedRoom.id}`,
+    };
+
     try {
-      const checklistPayload = selectedRoom.checklist.map((label, idx) => ({
-        label,
-        completed: !!checkedItems[idx],
-      }));
-      if (sanitaryBinChanged) {
-        checklistPayload.push({
-          label: 'Sanitary Bin Liner Replaced, Unit Sanitised & Waste Collected',
-          completed: true,
-        });
-      }
-      if (airFreshenerChanged) {
-        checklistPayload.push({
-          label: 'Automatic Air Freshener Refill / Battery Changed & Spray Checked',
-          completed: true,
-        });
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        throw new Error('OFFLINE_MODE');
       }
 
       const res = await fetch('/api/cleaning-records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          date: selectedDate,
-          zone: selectedRoom.zone,
-          location: selectedRoom.room,
-          frequency_badge: selectedRoom.frequencyBadge,
-          checklist_items: checklistPayload,
-          total_time_minutes: timeMinutes,
-          shift_type: shiftType,
-          cleaning_type:
-            selectedRoom.frequencyBadge === 'WEEKLY'
-              ? 'Weekly Hygiene Service'
-              : 'Scheduled Daily Hygiene Clean',
-          chemicals_used: selectedChemicals,
-          operators_involved: operatorName
-            .split(',')
-            .map(s => s.trim())
-            .filter(Boolean),
-          ssop_verified: ssopVerified,
-          visual_inspection_passed: visualPassed,
+          ...reportPayload,
           corrective_action: correctiveAction,
-          before_photos: beforePhotos,
-          after_photos: afterPhotos,
-          comments,
-          submitted_by: operatorName,
-          supervisor_signoff: supervisorName,
         }),
       });
 
-      const json = await res.json();
-      if (!res.ok) {
+      const json = (await res.json()) as { data?: { id: string; report_number: string }; error?: string };
+      if (!res.ok || !json.data) {
         throw new Error(json.error || 'Failed to save room cleaning report');
       }
 
+      await deleteRoomDraft(selectedDate, selectedRoom.code);
       await loadRecordsForDate(selectedDate);
       setToast({
         type: 'success',
         text: `Room "${selectedRoom.room}" logged (${json.data.report_number}) & Active Schedule updated!`,
         reportId: json.data.id,
       });
-    } catch (err) {
+    } catch {
+      // Save to IndexedDB offline queue so the checklist works seamlessly offline
+      await enqueueOfflineCleaningReport(selectedRoom.code, reportPayload);
+      await deleteRoomDraft(selectedDate, selectedRoom.code);
+      await refreshPendingQueue();
       setToast({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Error saving report',
+        type: 'success',
+        text: `⚡ Saved "${selectedRoom.room}" to Device Offline Queue! It will automatically sync to the Portal as soon as internet returns.`,
       });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const completedRoomNames = new Set(todayRecords.map(r => r.location));
+  const pendingForSelectedDate = pendingOfflineQueue.filter(q => q.payload.date === selectedDate);
+  const completedRoomNames = new Set([
+    ...todayRecords.map(r => r.location),
+    ...pendingForSelectedDate.map(q => q.payload.location),
+  ]);
+  const offlineQueuedRoomNames = new Set(pendingForSelectedDate.map(q => q.payload.location));
+
   const filteredRooms =
     selectedZone === 'All Zones'
       ? NUPURE_ROOMS
@@ -207,7 +338,67 @@ export default function CleaningReportPage() {
   const progressPct = Math.round((completedCount / NUPURE_ROOMS.length) * 100);
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 1440, margin: '0 auto' }}>
+    <div className="np-page">
+      {/* Live Online / Offline Sync Status Bar */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 10,
+          padding: '10px 16px',
+          borderRadius: 10,
+          marginBottom: 16,
+          background: isOnline ? '#f0fdf4' : '#fffbeb',
+          border: isOnline ? '1px solid #bbf7d0' : '1px solid #fde68a',
+          color: isOnline ? '#166534' : '#92400e',
+          fontSize: 13,
+          fontWeight: 700,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span>{isOnline ? '🟢 Online — Live Portal Sync Active' : '🟠 Offline Mode — Checklists & Photos Saved on Device (IndexedDB)'}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.85 }}>
+            • Auto-saving draft for {selectedRoom.code}
+          </span>
+        </div>
+
+        {pendingOfflineQueue.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span
+              style={{
+                background: '#fef3c7',
+                color: '#b45309',
+                border: '1px solid #fcd34d',
+                padding: '4px 10px',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 800,
+              }}
+            >
+              ⚡ {pendingOfflineQueue.length} Offline Report{pendingOfflineQueue.length === 1 ? '' : 's'} Queued
+            </span>
+            <button
+              type="button"
+              disabled={!isOnline || syncingOffline}
+              onClick={() => void handleSyncOfflineQueue()}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 8,
+                border: 'none',
+                background: isOnline ? '#0284c7' : '#94a3b8',
+                color: '#ffffff',
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: isOnline && !syncingOffline ? 'pointer' : 'not-allowed',
+              }}
+            >
+              {syncingOffline ? '⏳ Syncing...' : '🔄 Sync to Portal Now'}
+            </button>
+          </div>
+        )}
+      </div>
       {/* Header */}
       <div
         style={{
@@ -395,8 +586,52 @@ export default function CleaningReportPage() {
         })}
       </div>
 
+      {/* Quick Room Selector Dropdown for iPad & Mobile Phones */}
+      <div
+        className="np-mobile-room-bar"
+        style={{
+          background: '#ffffff',
+          border: '2px solid #0284c7',
+          borderRadius: 12,
+          padding: '12px 16px',
+          boxShadow: '0 2px 6px rgba(2, 132, 199, 0.08)',
+        }}
+      >
+        <label style={{ display: 'block', fontSize: 11.5, fontWeight: 800, color: '#0284c7', textTransform: 'uppercase', marginBottom: 6 }}>
+          📱 Quick Jump — Select Room / Area ({filteredRooms.length} in view)
+        </label>
+        <select
+          value={selectedRoom.id}
+          onChange={e => {
+            const found = NUPURE_ROOMS.find(r => r.id === e.target.value);
+            if (found) void handleSelectRoom(found);
+          }}
+          style={{
+            width: '100%',
+            padding: '11px 12px',
+            borderRadius: 8,
+            border: '1px solid #cbd5e1',
+            fontSize: 15,
+            fontWeight: 700,
+            color: '#0f172a',
+            background: '#f8fafc',
+          }}
+        >
+          {filteredRooms.map(r => {
+            const done = completedRoomNames.has(r.room);
+            const queued = offlineQueuedRoomNames.has(r.room);
+            return (
+              <option key={r.id} value={r.id}>
+                {done ? (queued ? '⚡ [Queued] ' : '✓ [Done] ') : ''}
+                {r.code} — {r.room} ({r.frequencyBadge})
+              </option>
+            );
+          })}
+        </select>
+      </div>
+
       {/* Main Two-Column Layout: Left = Room Selector, Right = Active Room Digital Report Form */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 420px) 1fr', gap: 24, alignItems: 'start' }}>
+      <div className="np-cleaning-grid">
         {/* Left Column: Room List */}
         <div
           style={{
@@ -429,6 +664,7 @@ export default function CleaningReportPage() {
             {filteredRooms.map(r => {
               const isSelected = selectedRoom.id === r.id;
               const isDone = completedRoomNames.has(r.room);
+              const isOfflineQueued = offlineQueuedRoomNames.has(r.room);
               const badgeBg =
                 r.frequencyBadge === '7 DAYS'
                   ? '#dcfce7'
@@ -445,7 +681,7 @@ export default function CleaningReportPage() {
               return (
                 <div
                   key={r.id}
-                  onClick={() => handleSelectRoom(r)}
+                  onClick={() => void handleSelectRoom(r)}
                   style={{
                     padding: '14px 18px',
                     borderBottom: '1px solid #f1f5f9',
@@ -489,13 +725,13 @@ export default function CleaningReportPage() {
                         style={{
                           fontSize: 11,
                           fontWeight: 800,
-                          color: '#15803d',
-                          background: '#dcfce7',
+                          color: isOfflineQueued ? '#b45309' : '#15803d',
+                          background: isOfflineQueued ? '#fef3c7' : '#dcfce7',
                           padding: '2px 8px',
                           borderRadius: 6,
                         }}
                       >
-                        ✓ Done
+                        {isOfflineQueued ? '⚡ Queued' : '✓ Done'}
                       </span>
                     )}
                   </div>
@@ -1023,59 +1259,22 @@ export default function CleaningReportPage() {
             </div>
           </div>
 
-          {/* Photo Uploads (Before & After) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 20 }}>
-            <div style={{ padding: 14, borderRadius: 10, border: '1px dashed #cbd5e1', background: '#f8fafc' }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8 }}>
-                Pre-Clean / Before Photos ({beforePhotos.length})
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={e => handlePhotoUpload(e, 'before')}
-                disabled={uploadingPhoto}
-                style={{ fontSize: 12 }}
-              />
-              {beforePhotos.length > 0 && (
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-                  {beforePhotos.map((u, i) => (
-                    <img
-                      key={i}
-                      src={u}
-                      alt="Before"
-                      style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 6, border: '1px solid #cbd5e1' }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div style={{ padding: 14, borderRadius: 10, border: '1px dashed #cbd5e1', background: '#f8fafc' }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8 }}>
-                Post-Clean / Verification Photos ({afterPhotos.length})
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={e => handlePhotoUpload(e, 'after')}
-                disabled={uploadingPhoto}
-                style={{ fontSize: 12 }}
-              />
-              {afterPhotos.length > 0 && (
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-                  {afterPhotos.map((u, i) => (
-                    <img
-                      key={i}
-                      src={u}
-                      alt="After"
-                      style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 6, border: '1px solid #cbd5e1' }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+          {/* Photo Uploads (Before & After — Direct Camera OR Saved Photos) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginBottom: 20 }}>
+            <PhotoCaptureControl
+              label="Pre-Clean / Before Photos"
+              photos={beforePhotos}
+              onChange={setBeforePhotos}
+              uploadEndpoint="/api/cleaning-records/upload"
+              disabled={submitting}
+            />
+            <PhotoCaptureControl
+              label="Post-Clean / Verification Photos"
+              photos={afterPhotos}
+              onChange={setAfterPhotos}
+              uploadEndpoint="/api/cleaning-records/upload"
+              disabled={submitting}
+            />
           </div>
 
           {/* Comments & Corrective Action */}
@@ -1101,12 +1300,14 @@ export default function CleaningReportPage() {
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
             <button
               type="submit"
-              disabled={submitting || uploadingPhoto}
+              disabled={submitting}
               style={{
+                width: '100%',
+                maxWidth: 460,
                 background: 'linear-gradient(135deg, #0f3460, #0284c7)',
                 color: '#ffffff',
                 border: 'none',
-                padding: '14px 28px',
+                padding: '15px 28px',
                 borderRadius: 10,
                 fontSize: 15,
                 fontWeight: 800,
@@ -1114,7 +1315,11 @@ export default function CleaningReportPage() {
                 opacity: submitting ? 0.7 : 1,
               }}
             >
-              {submitting ? 'Saving Room Report & Updating Schedule...' : `Complete & Sign Off "${selectedRoom.room}" →`}
+              {submitting
+                ? 'Saving Room Report...'
+                : isOnline
+                  ? `Complete & Sign Off "${selectedRoom.room}" →`
+                  : `⚡ Save "${selectedRoom.room}" Offline (Auto-Sync Later) →`}
             </button>
           </div>
         </form>

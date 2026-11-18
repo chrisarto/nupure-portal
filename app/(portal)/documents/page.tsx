@@ -11,6 +11,8 @@ import { NUPURE_PROCEDURE_PDF_URL, NUPURE_MANUAL_CHECKLIST_PDF_URL } from '@/lib
 /* ── Cover image mapping by normalised document type ──────────── */
 const COVER_MAP: Record<string, string> = {
   'work method statement': '/covers/procedures.jpg',
+  'safety data sheet': '/covers/procedures.jpg',
+  'sds': '/covers/procedures.jpg',
   'client training': '/covers/training.jpg',
   'induction': '/covers/inductions.jpg',
   'certificate': '/covers/certificates.jpg',
@@ -23,6 +25,7 @@ interface TabDef { label: string; match: (t: string) => boolean }
 const TABS: TabDef[] = [
   { label: 'All', match: () => true },
   { label: 'Procedures', match: (t) => t === 'work method statement' },
+  { label: 'SDS (Chemicals)', match: (t) => t.includes('safety data sheet') || t === 'sds' },
   { label: 'Training', match: (t) => t === 'client training' },
   { label: 'Inductions', match: (t) => t === 'induction' },
   { label: 'Certificates', match: (t) => t === 'certificate' },
@@ -40,6 +43,7 @@ function getCover(docType: string): string {
 function getCategoryLabel(docType: string): string {
   const t = normType(docType);
   if (t === 'work method statement') return 'Procedure';
+  if (t.includes('safety data sheet') || t === 'sds') return 'Safety Data Sheet (SDS)';
   if (t === 'client training') return 'Client Training';
   if (t === 'induction') return 'Induction';
   if (t === 'certificate') return 'Certificate';
@@ -342,6 +346,11 @@ export default function DocumentsPage() {
                     {doc.versionNumber && (
                       <span className={styles.tileMetaItem}>
                         📋 v{doc.versionNumber}
+                      </span>
+                    )}
+                    {doc.reviewedDate && (
+                      <span className={styles.tileMetaItem}>
+                        📅 Issued: {formatDate(doc.reviewedDate)}
                       </span>
                     )}
                     {doc.nextReviewDate && (

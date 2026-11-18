@@ -55,8 +55,8 @@ export default function CleaningReportPage() {
   const [operatorName, setOperatorName] = useState<string>('MJ Hygiene Site Team');
   const [supervisorName, setSupervisorName] = useState<string>('MJ Hygiene Supervisor');
   const [selectedChemicals, setSelectedChemicals] = useState<string[]>([
-    'Hospital-Grade Disinfectant / Surface Sanitiser',
-    'Neutral pH Hard Floor Cleaner',
+    'Use All — Multi-Purpose Hard Surface & Floor Cleaner (USAL)',
+    'Airlift Jelly Bean — General Purpose Disinfectant Deodoriser (CHRC-41015A)',
   ]);
   const [visualPassed, setVisualPassed] = useState<boolean>(true);
   const [ssopVerified, setSsopVerified] = useState<boolean>(true);

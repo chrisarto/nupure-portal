@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { AirtableAttachment, TrainingDocument } from '@/lib/airtable';
 
 type Row = { airtable_id: string; data: Record<string, unknown> };
@@ -39,7 +39,7 @@ function mapRow(row: Row): TrainingDocument {
 
 export async function GET(): Promise<NextResponse> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data: rows, error } = await supabase
       .from('nupure_training_documents')
       .select('airtable_id, data')

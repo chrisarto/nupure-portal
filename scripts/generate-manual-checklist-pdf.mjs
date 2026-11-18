@@ -534,10 +534,10 @@ const STOCKTAKE_ITEMS = [
   ['NP-BL-82', 'Heavy Duty Kitchen / Lunchroom Bin Liners 75L–82L (Carton of 250)', 'Carton', '4'],
   ['NP-BL-240', 'Wheelie Bin Liners 120L / 240L Heavy Duty (Carton of 100)', 'Carton', '3'],
   ['NP-SBL-100', 'Sanitary Hygiene Unit Modesty Liners (Pack of 100)', 'Pack', '4'],
-  ['NP-CH-DIS5', 'Hospital-Grade Disinfectant & Surface Sanitiser 5L (C-01)', '5L Drum', '4'],
-  ['NP-CH-FLR5', 'Neutral pH Hard Floor Cleaner Concentrate 5L (C-04)', '5L Drum', '4'],
-  ['NP-CH-BTH5', 'Bathroom & Toilet Descaler / Washroom Sanitiser 5L (C-03)', '5L Drum', '4'],
-  ['NP-CH-DSH5', 'Kitchenette Degreaser / Food-Safe Sanitiser & Dishwashing (C-02)', 'Pack / Drum', '4'],
+  ['CHRC-41015A', 'Airlift Jelly Bean — General Purpose Disinfectant Deodoriser 5L', '5L Drum', '4'],
+  ['BLAZ', 'Blue Lazer — Bathroom & Washroom Cleaner 5L (True Blue)', '5L Drum', '4'],
+  ['USAL', 'Use All — Multi-Purpose Hard Surface & Floor Cleaner 5L (True Blue)', '5L Drum', '4'],
+  ['V-SCN-DUAL-IC', 'V-Screen Dual Ice Cool — Urinal Screens (Vectair Systems)', 'Pack', '4'],
   ['NP-AF-300', 'Automatic Air Freshener 300ml Metered Aerosol Canisters (9 Units)', 'Canister', '12'],
 ];
 

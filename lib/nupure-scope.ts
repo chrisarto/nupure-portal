@@ -114,12 +114,10 @@ export const NUPURE_ZONES = [
 ] as const;
 
 export const NUPURE_CHEMICALS = [
-  'Hospital-Grade Disinfectant / Surface Sanitiser',
-  'Neutral pH Hard Floor Cleaner',
-  'Bathroom & Washroom Descaler / Sanitiser',
-  'Streak-Free Glass & Mirror Cleaner',
-  'Kitchenette Degreaser & Food-Safe Sanitiser',
-  'Odour Neutraliser / Enzyme Bio-Cleaner',
+  'Airlift Jelly Bean — General Purpose Disinfectant Deodoriser (CHRC-41015A)',
+  'Blue Lazer — Bathroom & Washroom Cleaner (BLAZ)',
+  'Use All — Multi-Purpose Hard Surface & Floor Cleaner (USAL)',
+  'V-Screen Dual Ice Cool — Urinal Screen (V-SCN-DUAL-IC-EU)',
 ] as const;
 
 /* ═══════════════════════════════════════════════════════════════

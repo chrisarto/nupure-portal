@@ -7,21 +7,21 @@ import { sendStocktakeOrderEmail } from '@/lib/email';
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const admin = createAdminClient();
     const [{ data: items, error: itemsErr }, { data: logs, error: logsErr }, { data: emailSetting }] =
       await Promise.all([
-        supabase
+        admin
           .from('nupure_stocktake_items')
           .select('*')
           .eq('active', true)
           .order('sort_order', { ascending: true })
           .order('item_name', { ascending: true }),
-        supabase
+        admin
           .from('nupure_stocktake_logs')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(100),
-        supabase
+        admin
           .from('nupure_email_settings')
           .select('recipients')
           .eq('report_type', 'stocktake-order')

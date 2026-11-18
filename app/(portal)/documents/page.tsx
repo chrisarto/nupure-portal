@@ -6,7 +6,11 @@ import styles from './Documents.module.css';
 import type { TrainingDocument } from '@/lib/types';
 import { CSVExportButton } from '@/app/components/ui/CSVExportButton';
 import AttachmentLink from '@/app/components/AttachmentLink';
-import { NUPURE_PROCEDURE_PDF_URL, NUPURE_MANUAL_CHECKLIST_PDF_URL } from '@/lib/nupure-scope';
+import {
+  NUPURE_PROCEDURE_PDF_URL,
+  NUPURE_MANUAL_CHECKLIST_PDF_URL,
+  NUPURE_CHEMICAL_CHART_PDF_URL,
+} from '@/lib/nupure-scope';
 
 /* ── Cover image mapping by normalised document type ──────────── */
 const COVER_MAP: Record<string, string> = {
@@ -195,6 +199,23 @@ export default function DocumentsPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a
+            href={NUPURE_CHEMICAL_CHART_PDF_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#16a34a',
+              color: '#ffffff',
+              textDecoration: 'none',
+              padding: '11px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 800,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🧪 Chemical Wall Chart &amp; SDS QR Codes (PDF) ↗
+          </a>
           <a
             href={NUPURE_MANUAL_CHECKLIST_PDF_URL}
             target="_blank"

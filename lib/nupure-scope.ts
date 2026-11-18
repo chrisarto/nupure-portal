@@ -1003,6 +1003,9 @@ export const NUPURE_PROCEDURE_PDF_URL =
 export const NUPURE_MANUAL_CHECKLIST_PDF_URL =
   'https://api.nupure.tmservices.cloud/storage/v1/object/public/documents/NuPure_Manual_Checklist_Pack.pdf';
 
+export const NUPURE_CHEMICAL_CHART_PDF_URL =
+  'https://api.nupure.tmservices.cloud/storage/v1/object/public/documents/NuPure_Chemical_Wall_Chart.pdf';
+
 export interface NuPureSopSpec {
   code: string;
   shortCode: string;

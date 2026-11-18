@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MJ Hygiene — Nu-Pure Beverages Chemical Quick Reference & SDS Wall Chart</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #ffffff;
+  color: #1e293b;
+  padding: 6px 10px;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+@page { size: A3 landscape; margin: 6mm; }
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 3px solid #f59e0b;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  gap: 16px;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.header-left img {
+  height: 50px;
+  
+}
+.header-title .eyebrow {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #0284c7;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.header-title h1 {
+  font-size: 22px;
+  font-weight: 900;
+  color: #1e40af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 1px 0;
+}
+.header-title .sub {
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-meta {
+  text-align: right;
+  font-size: 10.5px;
+  color: #475569;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.header-meta strong {
+  color: #0f172a;
+  font-size: 11px;
+}
+.portal-qr-box {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 4px 7px;
+}
+.portal-qr-box img {
+  width: 46px;
+  height: 46px;
+  border-radius: 4px;
+  background: #ffffff;
+}
+.portal-qr-text {
+  font-size: 8.8px;
+  font-weight: 700;
+  color: #334155;
+  line-height: 1.25;
+  max-width: 88px;
+}
+
+.grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.section-wrapper {
+  display: flex;
+  border: 2px solid;
+  border-radius: 8px;
+  overflow: hidden;
+  page-break-inside: avoid;
+}
+.section-header {
+  width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-size: 12px;
+  font-weight: 900;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+.section-content {
+  flex: 1;
+  padding: 7px;
+  display: flex;
+}
+
+/* Category 50% Opacity Section Styles */
+.sec-blue { border-color: #2563eb; }
+.sec-blue .section-header { background: #2563eb; }
+.sec-blue .section-content { background: rgba(59, 130, 246, 0.22); }
+
+.sec-san { border-color: #059669; }
+.sec-san .section-header { background: #059669; }
+.sec-san .section-content { background: rgba(16, 185, 129, 0.22); }
+
+.sec-acid { border-color: #dc2626; }
+.sec-acid .section-header { background: #dc2626; }
+.sec-acid .section-content { background: rgba(239, 68, 68, 0.20); }
+
+.sec-amen { border-color: #7c3aed; }
+.sec-amen .section-header { background: #7c3aed; }
+.sec-amen .section-content { background: rgba(139, 92, 246, 0.22); }
+
+.card {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 8px 11px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.card-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.chem-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.chem-name {
+  font-size: 15.5px;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.1;
+}
+.chem-code {
+  font-size: 9.8px;
+  font-weight: 700;
+  color: #475569;
+  margin-top: 1px;
+}
+.badges {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.hz {
+  font-size: 8.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 800;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.hz.dg { background: #dc2626; }
+.hz.ndg { background: #16a34a; }
+.hz.flam { background: #d97706; }
+
+.chem-desc {
+  font-size: 10.2px;
+  font-weight: 700;
+  color: #0369a1;
+}
+.specs-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #334155;
+  background: #f8fafc;
+  padding: 3px 7px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+.colour-zones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cz-pill {
+  font-size: 8.8px;
+  font-weight: 800;
+  padding: 1.5px 7px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.info-block {
+  font-size: 9.4px;
+  line-height: 1.3;
+  color: #1e293b;
+}
+.info-block strong.block-label {
+  display: block;
+  font-size: 8.6px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #475569;
+  letter-spacing: 0.04em;
+  margin-bottom: 1.5px;
+}
+.info-list {
+  padding-left: 13px;
+  margin: 0;
+}
+.info-list li {
+  margin-bottom: 1px;
+}
+.areas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.area-tag {
+  font-size: 8.6px;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  background: #e0f2fe;
+  color: #0f3460;
+  border: 1px solid #bae6fd;
+}
+.safety-box {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 3px solid #f59e0b;
+  border-radius: 5px;
+  padding: 4px 7px;
+  font-size: 9px;
+  line-height: 1.28;
+  color: #78350f;
+}
+.safety-box.danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+  border-left: 3px solid #dc2626;
+  color: #7f1d1d;
+}
+
+/* Right QR Column inside each Chemical Card */
+.card-qr {
+  width: 118px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 6px 5px;
+  text-align: center;
+}
+.qr-title {
+  font-size: 8.8px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #0f3460;
+  letter-spacing: 0.04em;
+}
+.card-qr img {
+  width: 92px;
+  height: 92px;
+  background: #ffffff;
+  padding: 2px;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  margin: 2px 0;
+}
+.sds-dates {
+  font-size: 8.2px;
+  font-weight: 700;
+  color: #334155;
+  line-height: 1.28;
+}
+.sds-dates .rev-due {
+  color: #15803d;
+  font-weight: 800;
+}
+.sds-link {
+  display: inline-block;
+  width: 100%;
+  font-size: 8.8px;
+  font-weight: 800;
+  color: #ffffff;
+  background: #1e40af;
+  text-decoration: none;
+  padding: 3.5px 5px;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+
+/* Bottom PPE & Critical Rules Bar */
+.ppe-bar {
+  background: #fefce8;
+  border: 2px solid #facc15;
+  border-radius: 8px;
+  padding: 7px 12px;
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  gap: 14px;
+}
+.ppe-col h3 {
+  font-size: 10.2px;
+  font-weight: 900;
+  color: #854d0e;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ppe-col p, .ppe-col ul {
+  font-size: 9px;
+  color: #422006;
+  line-height: 1.35;
+}
+.ppe-col ul {
+  padding-left: 14px;
+}
+.seg-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 2px;
+}
+.seg-item {
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 4px;
+  border-left: 3.5px solid;
+  line-height: 1.25;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9px;
+  color: #64748b;
+  margin-top: 5px;
+  font-weight: 700;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <img src="data:image/png;base64,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" alt="MJ Hygiene Services">
+    <div class="header-title">
+      <div class="eyebrow">Document ID: MJH-CHR-NUPURE-001 &bull; Controlled Site Chemical Register &amp; SDS QR Wall Chart</div>
+      <h1>Chemical Quick Reference &amp; SDS Wall Chart</h1>
+      <div class="sub">Nu-Pure Beverages — Stapylton Facility (1/76 Quinns Hill Rd E, Stapylton QLD 4207) &bull; MJ Hygiene Approved Chemicals</div>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="header-meta">
+      <div><strong>Suppliers:</strong> True Blue Chemicals &bull; Research Products &bull; Vectair Systems</div>
+      <div><strong>Portal SDS Library:</strong> https://nupure.tmservices.cloud/documents</div>
+      <div style="margin-top:3px">
+        <span class="hz dg">DANGER / CORROSIVE</span> &nbsp;
+        <span class="hz flam">WARNING / SENSITISER</span> &nbsp;
+        <span class="hz ndg">NON-HAZARDOUS / NON-DG</span>
+      </div>
+    </div>
+    <div class="portal-qr-box">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYAQMAAAC9QHvPAAAABlBMVEX///8AAABVwtN+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAB5ElEQVRoge2aTXKDMAyFxbDIkiNwlBzNHI2jcASWLDKo+rOhLcVJySrztChj9E0W8rP8bEr0odGyxyOGK1GaOnlBKTIjmBqzWu6mzJ1nauz90gozWgbMM4y8m28PSY69M5Ml09gzr2BeYgaps0t31rKD+Qcjo04lm9c7mPcy3hNkLkiYvZ5/9Q0wxwx7mJ4nZbTO1lcjA6bGlGh8JIyWnZkOAswh4+vdPJIU1vrqIFtUrvMK5q3MIk9jzIvaXMhwoZ2PAvMXo38HE7A8+mgDmlRLsBRJgzlhWlv92kh3+7vae1ewtQgw54xHZyv77uZIyq17kwxvvt7BXGdsLlS5TSl+yqoufQPMKaObfhq1vtlH5b1J6x1zAabGmIGyniBJKSy7FxVmCVsFps64SFkPkux1tr2p9AQwlxn1UYPsX6RedHJ5W3vVUHcVXgvMKZOdexI9F2vqXrTNdQZTZ2zk98Y7HxU9AUyV4RzhRcn2pig3b+cmMBeYEn4/bwLuNZ+fYKrMt29tvd+B+F1T3BsTgakx270xx2U7x9FIfRSBeYrh7fuFSXY47glg3sQM5D0hhbzVi4J5jSnfhWW4/X/CTz2DOWK8J2hh/Wiktr7l3CnA1BmvJodWc50fdq6MXwBznfnQ+AKQbzVDHsy3eQAAAABJRU5ErkJggg==" alt="Portal SDS Library QR">
+      <div class="portal-qr-text">
+        <strong style="color:#0284c7;display:block;font-size:10px">SCAN FOR PORTAL</strong>
+        Live SDS Library &amp; Room Checklists
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2x2">
+  
+  <div class="section-wrapper sec-blue">
+    <div class="section-header">SURFACE & FLOOR</div>
+    <div class="section-content">
+      <div class="card">
+        <div class="card-main">
+          <div class="chem-top">
+            <div>
+              <div class="chem-name">Use All</div>
+              <div class="chem-code">Product Code: <strong>USAL</strong> &bull; Supplier: <strong>True Blue Chemicals</strong> (5L Drum)</div>
+            </div>
+            <div class="badges">
+              <span class="hz ndg">NON-HAZARDOUS</span>
+              <span class="hz ndg">Non-DG</span>
+            </div>
+          </div>
+
+          <div class="chem-desc">Multi-Purpose Neutral Hard Surface & Floor Cleaner (SOP-01, SOP-02, SOP-04)</div>
+
+          <div class="specs-row">
+            <span>🧪 <strong>pH / Type:</strong> pH 7.0 – 8.0 (Neutral)</span>
+            <span>💧 <strong>Appearance:</strong> Yellow Liquid • Citrus Odour</span>
+          </div>
+
+          <div class="colour-zones">
+            <span class="cz-pill" style="background:#dbeafe;color:#1e40af;border-color:#93c5fd">🎨 BLUE — Offices, Hallways & Lab Floor</span><span class="cz-pill" style="background:#dcfce7;color:#166534;border-color:#86efac">🎨 GREEN — Lunchrooms & Kitchenettes</span>
+          </div>
+
+          <div class="info-block">
+            <strong class="block-label">Approved Application &amp; Method:</strong>
+            <ul class="info-list">
+              <li>General hard-surface spray & wipe (desks, tables, benches, counters, doors, sills, partitions)</li><li>Damp-mopping vinyl, tile & sealed hard floors across offices, lunchrooms & Laboratory floor</li><li>Safe neutral pH formula — will not dull or strip vinyl/sealed flooring</li>
+            </ul>
+          </div>
+
+          <div class="info-block">
+            <strong class="block-label">Where Used at Nu-Pure Stapylton (Approved Areas):</strong>
+            <div class="areas">
+              <span class="area-tag">Head Office (NP-HO-01 to 04, 06, 07)</span><span class="area-tag">Production Offices (NP-PR-01 to 03)</span><span class="area-tag">Laboratory Vinyl Floor ONLY (NP-PR-04)</span><span class="area-tag">Production Lunchroom & Entry (NP-PR-05)</span><span class="area-tag">Warehouse Offices & Kitchen (NP-WH-01 to 04)</span><span class="area-tag">Mezzanine Rooms & Kitchen (NP-MZ-01 to 04)</span><span class="area-tag">Gatehouse & Security Bldg (NP-GH-02 to 04)</span>
+            </div>
+          </div>
+
+          <div class="safety-box ">
+            <strong style="text-transform:uppercase;font-size:9.5px;display:block;margin-bottom:2px">⚠️ Safety, PPE &amp; First Aid Controls:</strong>
+            <ul class="info-list">
+              <li>PPE Required: Disposable nitrile gloves, closed safety shoes, safety glasses when decanting.</li><li>Safe Handling: Avoid eye contact and prolonged skin contact. Do not mix with other chemicals.</li><li>First Aid: Eyes — flush immediately with water. Skin — rinse with water. Poisons Info: 13 11 26.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card-qr">
+          <div class="qr-title">📱 Scan for Full SDS</div>
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYAQMAAAC9QHvPAAAABlBMVEX///8AAABVwtN+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC00lEQVRogeVawZGkMAyUiwdPQiAUZzYwmREKIfjJg0KnbsncXl0E1voxZaB5ILWkljwiSdekWKc8c6vKi2s5PjJzw2fHmJhmHzef/Mbtto1etrG3qshy2M01M2ZVe1RVwz4wzReYYobatA2OMb/LBgOUCwzGj/wWTIF99Fr1MfvsYMIzOIZ8hpfxyCLXgvprpP6f8/kwnsec4dO1Hkho3zve+ifXDYWJVXkBvwNc7k7snysdBpxHbUIl2iOoa5gF9mmDYrAx0vqVpSY+N7/rgc0zdXBGzKTnhk3hY3O1en5ecUc+7vcRMW3djb3ubpQbGKFQVCiCejnzYuBzsTvFbEQd9SCw6Xd7obA2jYixurPdQi/XXSTc/TLhlsQYuw11UdVrE/wOQ+ERi5Rn6LQYpbqAxHpLkmUBoYbs9hkRA/mkxnndQXPTkCYdr/j2HhcpMcjhEdn0MIWH5TFln2saWsfFII+hwipKktcmuyhs5MVZkBIjy7mFWVS73/FmRZEKzo+IMT6jEjGElTIDbQ7EpPiAQjJj4G6aphsKnD/DYt4TjYeJMczBHhZpmUENvzNrBeezYk66mxILxnr9DiY450fEiH9y5ZyN7EVqjhCW4loiKYZ+F9gHMxmzD8ZQxRtegJfO+cEwEiMm6EO8cHj/btHdq7AkxkBvYLTY0BcIQ/jrg3FqyMwYq03sgHxmDs437wdRm8pbv0bDcB5FL9vypGZNHzbIbKEh82J2tvZzDJDhe2vx+Nbx2mdIjEtH4/NNvdH825U1d8mNwYUyZDFj9LmNZXXcfaa/M9ixMLG8EglDeFHtannz2pQU08+g/TRn9nPYTz+M3l69MRzmPbeChuxte8zZJDumn1d6F0DwPkXGjrOAgTEMYbgbfI4zDs6afnx7VgxMswvTVzOZEVNHHRgj7/9A4tyquXzyWPa6kxTjecw5jw3/OKEXmyM0fZIXk3T9AQ5q/SQSmMpEAAAAAElFTkSuQmCC" alt="SDS QR Code for Use All">
+          <div class="sds-dates">
+            <div><strong>Ref:</strong> TBC00051 (v2.0)</div>
+            <div><strong>Issued:</strong> 01/09/2023</div>
+            <div class="rev-due"><strong>Review:</strong> 01/09/2028 (5-Yr)</div>
+          </div>
+          <a class="sds-link" href="https://api.nupure.tmservices.cloud/storage/v1/object/public/documents/sds/Use_All_SDS_2023-09-01.pdf" target="_blank" rel="noopener noreferrer">📄 Open SDS PDF ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-wrapper sec-san">
+    <div class="section-header">DISINFECTANT</div>
+    <div class="section-content">
+      <div class="card">
+        <div class="card-main">
+          <div class="chem-top">
+            <div>
+              <div class="chem-name">Airlift Jelly Bean</div>
+              <div class="chem-code">Product Code: <strong>CHRC-41015A (5L) / CHRC-41015 (15L)</strong> &bull; Supplier: <strong>Research Products (Freudenberg)</strong> (5L / 15L Drum)</div>
+            </div>
+            <div class="badges">
+              <span class="hz ndg">NON-HAZARDOUS</span>
+              <span class="hz ndg">Non-DG</span>
+            </div>
+          </div>
+
+          <div class="chem-desc">Commercial General-Purpose Disinfectant & Deodoriser (SOP-01, SOP-03, SOP-05)</div>
+
+          <div class="specs-row">
+            <span>🧪 <strong>pH / Type:</strong> pH 6.0 – 7.0 (Neutral)</span>
+            <span>💧 <strong>Appearance:</strong> Bright Red Liquid • Jellybean Fragrance</span>
+          </div>
+
+          <div class="colour-zones">
+            <span class="cz-pill" style="background:#fef9c3;color:#854d0e;border-color:#fde047">🎨 YELLOW — Washroom Basins, Showers & Touchpoints</span><span class="cz-pill" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5">🎨 RED — Sanitary Bins, Toilets & Cubicle Floors</span><span class="cz-pill" style="background:#dbeafe;color:#1e40af;border-color:#93c5fd">🎨 BLUE — General High-Touch Disinfection</span>
+          </div>
+
+          <div class="info-block">
+            <strong class="block-label">Approved Application &amp; Method:</strong>
+            <ul class="info-list">
+              <li>Disinfecting & deodorising washroom sinks, taps, splashbacks, doors, handles & partitions</li><li>Sanitising internal/external casings of Sanitary Waste Units (SB-01 to SB-10) during weekly service</li><li>Mopping & disinfecting amenity floors and deodorising general waste receptacles</li>
+            </ul>
+          </div>
+
+          <div class="info-block">
+            <strong class="block-label">Where Used at Nu-Pure Stapylton (Approved Areas):</strong>
+            <div class="areas">
+              <span class="area-tag">Head Office Amenities (NP-HO-05)</span><span class="area-tag">Production Male & Female Amenities (NP-PR-06, 07)</span><span class="area-tag">First Aid Room General Surfaces (NP-PR-08)</span><span class="area-tag">Warehouse Toilets (NP-WH-05, NP-WH-06)</span><span class="area-tag">Mezzanine Toilets (NP-MZ-05, NP-MZ-06)</span><span class="area-tag">Gatehouse Drivers' Toilet (NP-GH-01)</span><span class="area-tag">Sanitary Waste Units (SB-01 to SB-10)</span>
+            </div>
+          </div>
+
+          <div class="safety-box ">
+            <strong style="text-transform:uppercase;font-size:9.5px;display:block;margin-bottom:2px">⚠️ Safety, PPE &amp; First Aid Controls:</strong>
+            <ul class="info-list">
+              <li>PPE Required: Disposable nitrile gloves, safety glasses, closed safety shoes/overalls.</li><li>Safe Handling: Avoid eye contact, repeated skin contact, and inhalation of mists/aerosols. Store away from foodstuffs.</li><li>First Aid: Eyes — wash out immediately with water. Skin — flush with running water. Poisons Info: 13 11 26.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card-qr">
+          <div class="qr-title">📱 Scan for Full SDS</div>
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYAQMAAAC9QHvPAAAABlBMVEX///8AAABVwtN+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAADGUlEQVRogd1ay23rQAykoYOOKkGlbGOGLeM1plJUgo86CGbms3KeOwi9EAJHGgOhyJ0ZchPxpWtIrFfMuDK3yz7/ezbee7aYVj7L9e9hNvzhN10xZgKTeUQbgHzGgZtTVcw9t9uYy5iPfX6N+EpLxU7MlEdxzCviwmfbdVoVcg65fgFmGbf7bhjrE0+zOIa1qipFQm/I6bRiD7JE47Oei2HELXrqizk9rw/+qYXxGgm7q1ZRpcFy5R78WLUwrFVuwAjn1MG2FCDJn1UxVgEQ5gO39riSVYRElYphSmJAldh93IZbIPaAdkMCsA1XyAHegF9CRQzy+EgyZ+hDqEqT9JI9pyUxTOVr9KValWorcFUsybMgZkCV2mUxrdC4pcduRUgyTE3MQj7BIxQtYazSlAo821EXQ6qkIXkzDLxxh9n8k1sKYobfbD7O2KkCNPyNOlAUE/OCbbjLbpFYAl0M6OWw4wryZ0kMarV3nerUVLeD06peptdzQcxDVv8lgUN+cZNdjNI6dE9SEbO5NTttP3+R12rSOL6Bshi6Efy8UxTcyzD2Q17LPVpFTEiyoeCLPMm18z9Vm+2MYv9bGPoNwtQ1K8bJpjfte60FFTFvXb7v/TMokSQ/uSajJEZ1eOkSptZSPC8ftQ6aIpbEIOQ+F2XsYMUeuKjDU8SaGE56kVDvRPK8+mU53nY2zgUxg1Op/ivso7iOzi2/tVoMwwn2rA0IdZY0S7+cbqtzSQznh54DiGE8lVJfSYvoWq2I6b53lulV3br9l9IZWRSTnvQqrbewJ2wyvdyM7lMKYsiZSCWayoVHD/YkDpnkeUxVMcETB6j2OccOH6YwrdG9VkXMb5VyICBuEb2ETy3ttephpAU3vQPUKomFZr7F6bWqYrw0BOhFy94kNZI6+5SKmH5uHtJu5vdKqy8Dme9+pyIGjyhwi+cA2fvKns3P88paGHVnqcOUPgc4wlMOLp+51MUA4Pnhlbqmf3UQ5v/YK2KU0+4nOYkSWx6n56+ICT/qHjI95vXQRvJdFCNu6eMdjaQ06fUc20VbEvOl6wdfDZW6T/WNhAAAAABJRU5ErkJggg==" alt="SDS QR Code for Airlift Jelly Bean">
+          <div class="sds-dates">
+            <div><strong>Ref:</strong> FHCS00016 (v5.0)</div>
+            <div><strong>Issued:</strong> 04/09/2026</div>
+            <div class="rev-due"><strong>Review:</strong> 04/09/2031 (5-Yr)</div>
+          </div>
+          <a class="sds-link" href="https://api.nupure.tmservices.cloud/storage/v1/object/public/documents/sds/Airlift_Jellybean_SDS_2026-09-04.pdf" target="_blank" rel="noopener noreferrer">📄 Open SDS PDF ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-wrapper sec-acid">
+    <div class="section-header">WASHROOM ACID</div>
+    <div class="section-content">
+      <div class="card">
+        <div class="card-main">
+          <div class="chem-top">
+            <div>
+              <div class="chem-name">Blue Lazer</div>
+              <div class="chem-code">Product Code: <strong>BLAZ</strong> &bull; Supplier: <strong>True Blue Chemicals</strong> (5L Drum)</div>
+            </div>
+            <div class="badges">
+              <span class="hz dg">DANGER — CORROSIVE TO EYES (H318) & SKIN IRRITANT (H315)</span>
+              <span class="hz ndg">Non-DG</span>
+            </div>
+          </div>
+
+          <div class="chem-desc">Heavy-Duty Acidic Bathroom Cleaner, Descaler & Sanitiser (SOP-03)</div>
+
+          <div class="specs-row">
+            <span>🧪 <strong>pH / Type:</strong> pH < 2.5 (Acidic — Phosphoric Acid 10–30%, Quat 1–10%)</span>
+            <span>💧 <strong>Appearance:</strong> Viscous Blue Liquid • Oceanic Odour</span>
+          </div>
+
+          <div class="colour-zones">
+            <span class="cz-pill" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5">🎨 RED — Toilet Bowls, Urinals & Cubicle Floors</span><span class="cz-pill" style="background:#fef9c3;color:#854d0e;border-color:#fde047">🎨 YELLOW — Showers, Soap Scum & Scale Removal</span>
+          </div>
+
+          <div class="info-block">
+            <strong class="block-label">Approved Application &amp; Method:</strong>
+            <ul class="info-list">
+              <li>Descaling & sanitising toilet bowls, urinals, flushing rims & encrusted mineral deposits</li><li>Removing soap build-up, body fat & hard-water scale from Production shower bases, walls & fittings</li><li>Observe manufacturer contact time; scrub with segregated RED (toilet) or YELLOW (shower/basin) tools & rinse</li>
+            </ul>
+          </div>
+
+          <div class="info-block">
+            <strong class="block-label">Where Used at Nu-Pure Stapylton (Approved Areas):</strong>
+            <div class="areas">
+              <span class="area-tag">Production Male Amenities & Shower (NP-PR-06)</span><span class="area-tag">Production Female Amenities & Shower (NP-PR-07)</span><span class="area-tag">Head Office Male/Female/Accessible Toilets (NP-HO-05)</span><span class="area-tag">Warehouse Unisex & Accessible Toilets (NP-WH-05, 06)</span><span class="area-tag">Mezzanine Male & Female Toilets (NP-MZ-05, 06)</span><span class="area-tag">Gatehouse Drivers' Toilet (NP-GH-01)</span>
+            </div>
+          </div>
+
+          <div class="safety-box danger">
+            <strong style="text-transform:uppercase;font-size:9.5px;display:block;margin-bottom:2px">⚠️ Safety, PPE &amp; First Aid Controls:</strong>
+            <ul class="info-list">
+              <li>MANDATORY PPE: Safety glasses / eye shield, nitrile rubber gloves, closed safety shoes.</li><li>CRITICAL WARNING: Causes serious eye damage (corneal burns) & skin irritation. NEVER mix with chlorine/bleach or alkaline products.</li><li>First Aid: IF IN EYES: Irrigate with copious water for 15 minutes holding eyelids open & seek urgent medical attention.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card-qr">
+          <div class="qr-title">📱 Scan for Full SDS</div>
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYAQMAAAC9QHvPAAAABlBMVEX///8AAABVwtN+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC0klEQVRogeVawbGrMAwUw4EjJVCKOwukM0qhBI4+MNbXruS8zHsVWN+XOHhzQFpJKzkiSdesWJdMeheV5SpN1vOFjdaVZ+eYmNtebrnEv9TtxMu+8EsxsO23zJhNH7PGVO27GsbsExar67nrPTimLTCCbArwa8Yv5H/BGOdlN/toW1Tf9kTa4BjyuQjcLYuRernLW6uUP5zPh/E8VshwxHIDxqPgV64bChOr2GvrAb8DPD32iNH9vdJhwHlkLfj9iKAuYRbY5x4Y88jGp+Z34bn5XU9s2uw1NydGxO0z4RhOVrgb5Edme4Xnx8O4avC0rDiHqyfkZzfCeuXF2NrxBJG7y4KShCeWlvGDibVpVIzSy5aj6G4jQOsbUD0zZjtmZRcAbYxYRh6DSGaRirhIiUEesw+vwpCOMMuBE1bqp/cFo2EQx8jG3hegSJlI9iMKqjsxxnwucC7CXB4mMytS3JjF0CANi2H6orLoCQ2BfcLvvTblxEBikfPoiWAWHsFqqp0AQ2J6bfLU5CE8AWxMMD5TXibFUD9Xtu1IX/hCjGVsaEjn/IgYxLLlKHbrsw/cyPICUusTnE+JgUk+6sJnMmjbfUJlemONvmA4zHqBzwVVBr2eoJn9SCwmq9QYqCYWJTYIEpxnp+B9wYgYy1FoVL3Fs43377UTIFZOjNcmgTUOaGO4mjNG/dGQSTEzxlBQF6xNlsdoH89svR8cEhMzGWJivFaOOaYZP/UrKeYIL7MSFTcLOE+rhd4YEyMcxcS7c/pWg+Gy5sZ4r6ecG3vWYm3CkzZ/5quDYWL5HQdf2Tbvz4QqNElOTL+D7iXp5IxRY0qzh84cENPvrXBlhesq0LhRG/Pdc2P8vpLSUSJRvzWa+K/7gkExXm6i1MQdh6nlr3jPi2ke053z1W/x2sAY8f+BuDZG2+6xHPrQ605SjOcx/78ERzFL/4OBESDskxSTdP0DdKvPN+GyTQ0AAAAASUVORK5CYII=" alt="SDS QR Code for Blue Lazer">
+          <div class="sds-dates">
+            <div><strong>Ref:</strong> TBC00007 (v2.0)</div>
+            <div><strong>Issued:</strong> 01/09/2023</div>
+            <div class="rev-due"><strong>Review:</strong> 01/09/2028 (5-Yr)</div>
+          </div>
+          <a class="sds-link" href="https://api.nupure.tmservices.cloud/storage/v1/object/public/documents/sds/Blue_Lazer_SDS_2023-09-01.pdf" target="_blank" rel="noopener noreferrer">📄 Open SDS PDF ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-wrapper sec-amen">
+    <div class="section-header">URINAL HYGIENE</div>
+    <div class="section-content">
+      <div class="card">
+        <div class="card-main">
+          <div class="chem-top">
+            <div>
+              <div class="chem-name">V-Screen Dual — Ice Cool</div>
+              <div class="chem-code">Product Code: <strong>V-SCN-DUAL-IC-EU</strong> &bull; Supplier: <strong>Vectair Systems Ltd</strong> (Pack (Urinal Screens))</div>
+            </div>
+            <div class="badges">
+              <span class="hz flam">WARNING — SKIN SENSITISER (H317)</span>
+              <span class="hz ndg">Non-DG</span>
+            </div>
+          </div>
+
+          <div class="chem-desc">Dual-Sided Anti-Splash & Deodorising Urinal Screen (SOP-03)</div>
+
+          <div class="specs-row">
+            <span>🧪 <strong>pH / Type:</strong> Solid EVA Matrix (Not Applicable)</span>
+            <span>💧 <strong>Appearance:</strong> Opaque Blue Solid • Ice Cool Fragrance</span>
+          </div>
+
+          <div class="colour-zones">
+            <span class="cz-pill" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5">🎨 RED — Urinal Fixtures Only</span>
+          </div>
+
+          <div class="info-block">
+            <strong class="block-label">Approved Application &amp; Method:</strong>
+            <ul class="info-list">
+              <li>Placed directly over urinal drain outlets to prevent splashback, trap debris & provide continuous deodorisation</li><li>Inspect during daily urinal cleaning (SOP-03) and replace when fragrance is depleted or screen is fouled</li><li>Remove old screen using RED-segregated gloved hands and dispose in sealed general waste</li>
+            </ul>
+          </div>
+
+          <div class="info-block">
+            <strong class="block-label">Where Used at Nu-Pure Stapylton (Approved Areas):</strong>
+            <div class="areas">
+              <span class="area-tag">Production Male Amenities — 2 Urinals (NP-PR-06)</span><span class="area-tag">Head Office Male Amenities — Urinals (NP-HO-05)</span><span class="area-tag">Mezzanine Male Toilet (NP-MZ-05)</span>
+            </div>
+          </div>
+
+          <div class="safety-box ">
+            <strong style="text-transform:uppercase;font-size:9.5px;display:block;margin-bottom:2px">⚠️ Safety, PPE &amp; First Aid Controls:</strong>
+            <ul class="info-list">
+              <li>PPE Required: Disposable nitrile gloves and eye protection when handling/replacing urinal screens.</li><li>Safe Handling: Contains fragrance sensitisers (H317: May cause an allergic skin reaction). Wash hands with soap & water after handling.</li><li>First Aid: IF ON SKIN: Wash with plenty of soap and water. If skin irritation or rash occurs: Get medical advice/attention.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card-qr">
+          <div class="qr-title">📱 Scan for Full SDS</div>
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYAQMAAAC9QHvPAAAABlBMVEX///8AAABVwtN+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAADGElEQVRogd2avXHDMAyFkWOh0iN4FC3mk+3LYhxFI6h0oTPyfig72SCwjoUifUUggMAD6IgPvVriesb5GfH1wDp/b3PEnFvEqfNd9v/HrPjHF/3711zJZN9jbltg7UGyKINXy5S3aV3wBaZ1+Gcjtp9yr82sNjxzveAhsY71AQyAO2JVwYm3jtLSDGN1yueU+TjDswhO+DT0Bf7EczFGuWWi+V7w6X6sP/mnFuNryjs8i7SZsB2Gcw/a/PdVi2GsqhbIrbdpGIvEggt/7GUZbUCGK8y/PhCcqT3YabvuSzKBlCLDgxtQDKOU2MYKziJekbHtqViFT5lMEppE6QUOnd8+rcZcafsAcE9BMgyf35qkHuOtB/NZ7PDsutFw1e5s1JNRkkGIBqQIDGftXnjvEsC0idqtJFORYf634VfJksuRW1IfwSm0JPM4p1QWANSFb+y+YEpB0MrnVZnF3pzWUMQ2mbxbcUFunaoywULAL+AMc3izp3oZx2o9plFihdWIYhW2U+3TrfNbk9RjRiK5a1H505WsAnrcZXtRZn1pY4QrhbG6M2utffQy5Zij9xy5hb0M7R1kt9b6X4xnGsOuc6btyjjsUp4vyag3weaCiArlDcoMJnnDvAoyjbndE5sv7zTPD2nyPLrLioxEVOZovhC0NtyradpWkmmj83LQosGkwGC6sOidnVvqMepNWJfTo1En/u4O5VW7KzJ8O0bZYz+O+bzmbFmUaZSFLgcccXA+nxYblIgjVgsyo09hzgzXAsanYzU84ijJNMrCp6J00ZFK03mKRK9b5qIM54fMLR5GTSkFJfkUrnS9JBPxemtZclO2VAtG+OhlyjGOT95Iz6+viY0xa616TPNwI1PK5J4jZ7LACWhFmRhutdCiTlZp2+NVxGsy49ycwtiDqctQ+z6v7Hn0ntUYBiqlvho0jkZP7/PKV19ZkVHh1jMdQCRrt34PoGeO57LMuhwHK9/OKkeP9nsOUJHxtI3aWGdDx1Rq/j1PqMVEeCzPGsfaHf7lRh+9TBRlnCp9SMTl3wN4KLrrU5RkPvT6AVUuzjBH7oYZAAAAAElFTkSuQmCC" alt="SDS QR Code for V-Screen Dual — Ice Cool">
+          <div class="sds-dates">
+            <div><strong>Ref:</strong> SDS_1155 (v4.0)</div>
+            <div><strong>Issued:</strong> 21/02/2024</div>
+            <div class="rev-due"><strong>Review:</strong> 21/02/2029 (5-Yr)</div>
+          </div>
+          <a class="sds-link" href="https://api.nupure.tmservices.cloud/storage/v1/object/public/documents/sds/V-Screen_Dual_Ice_Cool_SDS_2024-02-21.pdf" target="_blank" rel="noopener noreferrer">📄 Open SDS PDF ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ppe-bar">
+  <div class="ppe-col">
+    <h3>⚠️ Mandatory PPE &amp; Chemical Handling Rules</h3>
+    <ul>
+      <li><strong>Eye Protection (Safety Glasses):</strong> Mandatory when handling or decanting <strong>Blue Lazer</strong> (Corrosive to Eyes — H318) and recommended when decanting any chemical.</li>
+      <li><strong>Hand &amp; Foot Protection:</strong> Disposable nitrile rubber gloves and closed work/safety boots must be worn for all cleaning &amp; hygiene tasks. Change gloves between zones.</li>
+      <li><strong>Label &amp; Dispensing Control:</strong> Only dispense at authorised points into correctly labelled trigger bottles/buckets. <strong>Never reuse food or drink containers.</strong></li>
+      <li><strong>Emergency / Poisons Info:</strong> Australia Poisons Information Centre: <strong>13 11 26</strong>. Ensure eyewash stations are unobstructed.</li>
+    </ul>
+  </div>
+
+  <div class="ppe-col" style="border-left:1px solid #fde047;padding-left:16px">
+    <h3 style="color:#0f3460">🎨 Colour-Coded Equipment Segregation (MJH-SOP-NUPURE-001)</h3>
+    <div class="seg-grid">
+      <div class="seg-item" style="background:#fee2e2;color:#991b1b;border-color:#dc2626">
+        <strong>RED — Toilets &amp; Urinals:</strong><br>Toilet bowls, urinals, sanitary bins (SB-01..10) &amp; cubicle floors. <em>Never use in sinks, kitchens or offices.</em>
+      </div>
+      <div class="seg-item" style="background:#fef9c3;color:#854d0e;border-color:#eab308">
+        <strong>YELLOW — Washrooms &amp; Showers:</strong><br>Basins, taps, mirrors, showers, vanity tops &amp; tiled walls. <em>Never use on toilets or food areas.</em>
+      </div>
+      <div class="seg-item" style="background:#dcfce7;color:#166534;border-color:#16a34a">
+        <strong>GREEN — Lunchrooms &amp; Kitchens:</strong><br>Dining tables, food benches, microwaves, fridges &amp; sinks. <em>Dedicated food-area cloths only.</em>
+      </div>
+      <div class="seg-item" style="background:#dbeafe;color:#1e40af;border-color:#2563eb">
+        <strong>BLUE — Offices &amp; General Floors:</strong><br>General offices, boardrooms, reception, internal glass &amp; Laboratory vinyl floor (SOP-04).
+      </div>
+    </div>
+  </div>
+
+  <div class="ppe-col" style="border-left:1px solid #fde047;padding-left:16px">
+    <h3 style="color:#b91c1c">⛔ Critical Nu-Pure Site Boundaries</h3>
+    <ul>
+      <li><strong>NEVER Mix Chemicals:</strong> Never combine <strong>Blue Lazer</strong> (acid) with bleach/chlorine or alkaline cleaners — toxic gas hazard.</li>
+      <li><strong>Strict Laboratory Rule (NP-PR-04 / SOP-04):</strong> Use <strong>Use All</strong> with clean <strong>BLUE</strong> floor tools on the vinyl floor ONLY. Do NOT touch lab benches, chemicals, samples or instruments.</li>
+      <li><strong>Managed Air Fresheners (AF-01 to AF-09):</strong> Keep aerosols away from ignition sources; do not spray near people, food or open electricals.</li>
+      <li><strong>5-Year SDS Review Control:</strong> All site SDS documents are controlled in the Portal (<code>/documents</code>) and reviewed at least every 5 years from issue date.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="footer">
+  <span>MJH-CHR-NUPURE-001 (v1.0) | MJ Hygiene Management Services Pty Ltd — Nu-Pure Beverages (Stapylton Facility)</span>
+  <span>Issued: 18 Nov 2026 &bull; SDS 5-Year Review Cycle Verified &bull; Scan any QR code above with a phone/tablet camera to open the full PDF Safety Data Sheet</span>
+</div>
+
+</body>
+</html>

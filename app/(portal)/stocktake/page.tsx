@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { NUPURE_CHEMICAL_CHART_PDF_URL } from '@/lib/nupure-scope';
 
 interface StocktakeItem {
   id: string;
@@ -174,7 +175,23 @@ export default function StocktakePage() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a
+            href={NUPURE_CHEMICAL_CHART_PDF_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: '10px 16px',
+              borderRadius: 10,
+              background: '#16a34a',
+              color: '#ffffff',
+              textDecoration: 'none',
+              fontSize: 13,
+              fontWeight: 800,
+            }}
+          >
+            🧪 Site Chemical Chart &amp; SDS QR Codes (PDF) ↗
+          </a>
           <button
             type="button"
             onClick={() => setShowAddModal(true)}

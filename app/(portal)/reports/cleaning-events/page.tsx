@@ -16,6 +16,8 @@ interface CleaningRecord {
   shift_type: string;
   visual_inspection_passed: boolean;
   ssop_verified: boolean;
+  before_photos?: string[] | null;
+  after_photos?: string[] | null;
   submitted_by: string;
   supervisor_signoff: string;
   created_at: string;
@@ -237,18 +239,34 @@ export default function CleaningEventsListPage() {
                   </td>
                   <td style={{ padding: '12px 16px', color: '#334155' }}>{rec.submitted_by}</td>
                   <td style={{ padding: '12px 16px' }}>
-                    <span
-                      style={{
-                        padding: '3px 10px',
-                        borderRadius: 999,
-                        fontSize: 11,
-                        fontWeight: 800,
-                        background: rec.visual_inspection_passed ? '#dcfce7' : '#fee2e2',
-                        color: rec.visual_inspection_passed ? '#15803d' : '#dc2626',
-                      }}
-                    >
-                      {rec.visual_inspection_passed ? 'PASSED ✓' : 'RECLEAN REQ'}
-                    </span>
+                    <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          padding: '3px 10px',
+                          borderRadius: 999,
+                          fontSize: 11,
+                          fontWeight: 800,
+                          background: rec.visual_inspection_passed ? '#dcfce7' : '#fee2e2',
+                          color: rec.visual_inspection_passed ? '#15803d' : '#dc2626',
+                        }}
+                      >
+                        {rec.visual_inspection_passed ? 'PASSED ✓' : 'RECLEAN REQ'}
+                      </span>
+                      {(rec.before_photos?.length || 0) + (rec.after_photos?.length || 0) > 0 && (
+                        <span
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: 999,
+                            fontSize: 11,
+                            fontWeight: 800,
+                            background: '#e0f2fe',
+                            color: '#0369a1',
+                          }}
+                        >
+                          📷 {(rec.before_photos?.length || 0) + (rec.after_photos?.length || 0)}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', gap: 10, alignItems: 'center' }}>

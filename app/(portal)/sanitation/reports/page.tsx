@@ -746,6 +746,92 @@ export default function DailyCleaningCompletionReportPage() {
                   {rec.items_cleaned}
                 </div>
               )}
+
+              {/* Uploaded Pre-Clean & Post-Clean Photos */}
+              {((Array.isArray(rec.before_photos) && rec.before_photos.length > 0) ||
+                (Array.isArray(rec.after_photos) && rec.after_photos.length > 0)) && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: 8 }}>
+                    📷 Uploaded Photo Verification Evidence (
+                    {(rec.before_photos?.length || 0) + (rec.after_photos?.length || 0)} Photo
+                    {(rec.before_photos?.length || 0) + (rec.after_photos?.length || 0) === 1 ? '' : 's'})
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    {(rec.before_photos ?? []).map((u, idx) => (
+                      <a
+                        key={`pre-${idx}`}
+                        href={u}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'block',
+                          width: 96,
+                          borderRadius: 8,
+                          overflow: 'hidden',
+                          border: '1px solid #cbd5e1',
+                          background: '#f8fafc',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={u}
+                          alt={`Pre-Clean ${idx + 1}`}
+                          style={{ width: '100%', height: 68, objectFit: 'cover', display: 'block' }}
+                        />
+                        <div
+                          style={{
+                            fontSize: 9.5,
+                            fontWeight: 800,
+                            color: '#475569',
+                            textAlign: 'center',
+                            padding: '2px 4px',
+                            background: '#f1f5f9',
+                          }}
+                        >
+                          BEFORE #{idx + 1}
+                        </div>
+                      </a>
+                    ))}
+                    {(rec.after_photos ?? []).map((u, idx) => (
+                      <a
+                        key={`post-${idx}`}
+                        href={u}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'block',
+                          width: 96,
+                          borderRadius: 8,
+                          overflow: 'hidden',
+                          border: '1px solid #86efac',
+                          background: '#f0fdf4',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={u}
+                          alt={`Post-Clean ${idx + 1}`}
+                          style={{ width: '100%', height: 68, objectFit: 'cover', display: 'block' }}
+                        />
+                        <div
+                          style={{
+                            fontSize: 9.5,
+                            fontWeight: 800,
+                            color: '#15803d',
+                            textAlign: 'center',
+                            padding: '2px 4px',
+                            background: '#dcfce7',
+                          }}
+                        >
+                          AFTER #{idx + 1}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

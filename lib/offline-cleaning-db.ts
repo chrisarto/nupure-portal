@@ -219,6 +219,21 @@ export async function removePendingCleaningReport(clientId: string): Promise<voi
   }
 }
 
+export async function clearAllPendingCleaningReports(): Promise<void> {
+  try {
+    const db = await openOfflineDb();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE_PENDING, 'readwrite');
+      tx.objectStore(STORE_PENDING).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  } catch {
+    // Ignore
+  }
+}
+
 /* ── Cached Daily Server Records for Offline Viewing ─────────── */
 
 export async function saveCachedDailyRecords(
@@ -264,45 +279,60 @@ export async function getCachedDailyRecords(date: string): Promise<CachedDailyRe
 
 export async function compressImageToDataUrl(
   file: File,
-  maxDimension = 1600,
-  quality = 0.82
+  maxDimension = 1280,
+  quality = 0.78
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const resultStr = typeof reader.result === 'string' ? reader.result : '';
-      if (!resultStr) {
-        reject(new Error('Failed to read image file'));
+    const objectUrl = typeof URL !== 'undefined' && URL.createObjectURL ? URL.createObjectURL(file) : '';
+    const img = new Image();
+
+    img.onload = () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      let { width, height } = img;
+      if (width > maxDimension || height > maxDimension) {
+        if (width >= height) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas context unavailable'));
         return;
       }
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxDimension || height > maxDimension) {
-          if (width >= height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
-          } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
-          }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(resultStr);
-          return;
-        }
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = () => resolve(resultStr);
-      img.src = resultStr;
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
     };
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsDataURL(file);
+
+    img.onerror = () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      // Fallback to FileReader if object URL fails
+      const reader = new FileReader();
+      reader.onload = () => {
+        const res = typeof reader.result === 'string' ? reader.result : '';
+        if (res) resolve(res);
+        else reject(new Error('Failed to decode photo'));
+      };
+      reader.onerror = () => reject(new Error('Failed to read photo file'));
+      reader.readAsDataURL(file);
+    };
+
+    if (objectUrl) {
+      img.src = objectUrl;
+    } else {
+      const reader = new FileReader();
+      reader.onload = () => {
+        img.src = typeof reader.result === 'string' ? reader.result : '';
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    }
   });
 }
 
@@ -346,13 +376,14 @@ export async function uploadOrStagePhoto(
   }
 }
 
-async function resolvePhotoUrlsBeforeSync(
+export async function resolvePhotoUrlsBeforeSync(
   photos: string[],
   uploadEndpoint = '/api/cleaning-records/upload'
 ): Promise<string[]> {
   const resolved: string[] = [];
   for (let i = 0; i < photos.length; i++) {
     const p = photos[i];
+    if (!p) continue;
     if (p.startsWith('data:image/')) {
       try {
         const blob = dataUrlToBlob(p);
@@ -367,7 +398,7 @@ async function resolvePhotoUrlsBeforeSync(
           }
         }
       } catch {
-        // Keep data URL fallback if upload endpoint unreachable
+        // Keep data URL fallback; server POST /api/cleaning-records also converts data:image/ to storage URL
       }
     }
     resolved.push(p);
@@ -380,25 +411,29 @@ async function resolvePhotoUrlsBeforeSync(
 export async function syncPendingCleaningReports(): Promise<{
   synced: number;
   remaining: number;
+  errors: string[];
 }> {
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
     const pending = await getPendingCleaningReports();
-    return { synced: 0, remaining: pending.length };
+    return { synced: 0, remaining: pending.length, errors: ['Device is currently offline'] };
   }
 
   const queue = await getPendingCleaningReports();
   if (queue.length === 0) {
-    return { synced: 0, remaining: 0 };
+    return { synced: 0, remaining: 0, errors: [] };
   }
 
   let synced = 0;
+  const errors: string[] = [];
+
   for (const item of queue) {
     try {
-      const beforeUrls = await resolvePhotoUrlsBeforeSync(item.payload.before_photos);
-      const afterUrls = await resolvePhotoUrlsBeforeSync(item.payload.after_photos);
+      const beforeUrls = await resolvePhotoUrlsBeforeSync(item.payload.before_photos || []);
+      const afterUrls = await resolvePhotoUrlsBeforeSync(item.payload.after_photos || []);
 
-      const finalPayload: CleaningReportPayload = {
+      const finalPayload = {
         ...item.payload,
+        corrective_action: item.payload.corrective_actions || '',
         before_photos: beforeUrls,
         after_photos: afterUrls,
       };
@@ -413,13 +448,17 @@ export async function syncPendingCleaningReports(): Promise<{
         await removePendingCleaningReport(item.clientId);
         await deleteRoomDraft(item.payload.date, item.roomCode);
         synced++;
+      } else {
+        const errJson = (await res.json().catch(() => ({}))) as { error?: string };
+        errors.push(`${item.payload.location}: ${errJson.error || `HTTP ${res.status}`}`);
       }
-    } catch {
+    } catch (err) {
+      errors.push(`${item.payload.location}: ${err instanceof Error ? err.message : 'Network error'}`);
       // Stop on network error; remaining items stay in IndexedDB for next reconnect
       break;
     }
   }
 
   const remainingQueue = await getPendingCleaningReports();
-  return { synced, remaining: remainingQueue.length };
+  return { synced, remaining: remainingQueue.length, errors };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   NUPURE_ZONES,
@@ -18,6 +18,7 @@ import {
   enqueueOfflineCleaningReport,
   getPendingCleaningReports,
   syncPendingCleaningReports,
+  resolvePhotoUrlsBeforeSync,
   saveCachedDailyRecords,
   getCachedDailyRecords,
   type QueuedCleaningReport,
@@ -35,6 +36,8 @@ interface CleaningRecordRow {
   total_time_minutes: number;
   visual_inspection_passed: boolean;
   submitted_by: string;
+  before_photos?: string[] | null;
+  after_photos?: string[] | null;
   created_at: string;
   isOfflineQueued?: boolean;
 }
@@ -43,6 +46,7 @@ export default function CleaningReportPage() {
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [selectedZone, setSelectedZone] = useState<string>('All Zones');
   const [selectedRoom, setSelectedRoom] = useState<NuPureRoomSpec>(NUPURE_ROOMS[0]);
+  const initialRoomSelectedRef = useRef<boolean>(false);
 
   // Checklist state for current room
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
@@ -75,6 +79,7 @@ export default function CleaningReportPage() {
   const refreshPendingQueue = useCallback(async () => {
     const queued = await getPendingCleaningReports();
     setPendingOfflineQueue(queued);
+    return queued;
   }, []);
 
   const loadRecordsForDate = useCallback(async (dateStr: string) => {
@@ -94,16 +99,21 @@ export default function CleaningReportPage() {
     }
   }, []);
 
-  const handleSyncOfflineQueue = useCallback(async () => {
+  const handleSyncOfflineQueue = useCallback(async (showFeedbackIfEmpty = false) => {
     setSyncingOffline(true);
     try {
-      const { synced, remaining } = await syncPendingCleaningReports();
+      const { synced, remaining, errors } = await syncPendingCleaningReports();
       await refreshPendingQueue();
       await loadRecordsForDate(selectedDate);
       if (synced > 0) {
         setToast({
           type: 'success',
           text: `✓ Synced ${synced} offline room report${synced === 1 ? '' : 's'} to the Nu-Pure Portal${remaining > 0 ? ` (${remaining} remaining)` : '!'}`,
+        });
+      } else if (errors.length > 0 && showFeedbackIfEmpty) {
+        setToast({
+          type: 'error',
+          text: `⚠️ Sync retry needed (${remaining} queued): ${errors[0]}`,
         });
       }
     } finally {
@@ -112,12 +122,17 @@ export default function CleaningReportPage() {
   }, [refreshPendingQueue, loadRecordsForDate, selectedDate]);
 
   useEffect(() => {
-    setIsOnline(typeof navigator !== 'undefined' ? navigator.onLine : true);
-    void refreshPendingQueue();
+    const onlineNow = typeof navigator !== 'undefined' ? navigator.onLine : true;
+    setIsOnline(onlineNow);
+    void refreshPendingQueue().then(queued => {
+      if (onlineNow && queued.length > 0) {
+        void handleSyncOfflineQueue(false);
+      }
+    });
 
     const onOnline = () => {
       setIsOnline(true);
-      void handleSyncOfflineQueue();
+      void handleSyncOfflineQueue(false);
     };
     const onOffline = () => {
       setIsOnline(false);
@@ -125,9 +140,21 @@ export default function CleaningReportPage() {
 
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
+
+    const intervalId = window.setInterval(() => {
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        void getPendingCleaningReports().then(q => {
+          if (q.length > 0) {
+            void handleSyncOfflineQueue(false);
+          }
+        });
+      }
+    }, 25000);
+
     return () => {
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
+      window.clearInterval(intervalId);
     };
   }, [refreshPendingQueue, handleSyncOfflineQueue]);
 
@@ -176,6 +203,8 @@ export default function CleaningReportPage() {
   }, [selectedDate]);
 
   useEffect(() => {
+    if (initialRoomSelectedRef.current) return;
+    initialRoomSelectedRef.current = true;
     const params = new URLSearchParams(window.location.search);
     const roomParam = params.get('room');
     const matched = roomParam ? NUPURE_ROOMS.find(r => r.room === roomParam) : undefined;
@@ -253,6 +282,16 @@ export default function CleaningReportPage() {
       });
     }
 
+    let finalBeforePhotos = beforePhotos;
+    let finalAfterPhotos = afterPhotos;
+
+    if (typeof navigator === 'undefined' || navigator.onLine) {
+      finalBeforePhotos = await resolvePhotoUrlsBeforeSync(beforePhotos);
+      finalAfterPhotos = await resolvePhotoUrlsBeforeSync(afterPhotos);
+      setBeforePhotos(finalBeforePhotos);
+      setAfterPhotos(finalAfterPhotos);
+    }
+
     const reportPayload: CleaningReportPayload = {
       date: selectedDate,
       zone: selectedRoom.zone,
@@ -277,8 +316,8 @@ export default function CleaningReportPage() {
       air_freshener_changed: airFreshenerChanged,
       comments,
       corrective_actions: correctiveAction,
-      before_photos: beforePhotos,
-      after_photos: afterPhotos,
+      before_photos: finalBeforePhotos,
+      after_photos: finalAfterPhotos,
       submitted_by: operatorName,
       schedule_event_id: `ev_${selectedRoom.id}`,
     };
@@ -304,9 +343,13 @@ export default function CleaningReportPage() {
 
       await deleteRoomDraft(selectedDate, selectedRoom.code);
       await loadRecordsForDate(selectedDate);
+      const photoSummary =
+        finalBeforePhotos.length + finalAfterPhotos.length > 0
+          ? ` with ${finalBeforePhotos.length + finalAfterPhotos.length} photo(s)`
+          : '';
       setToast({
         type: 'success',
-        text: `Room "${selectedRoom.room}" logged (${json.data.report_number}) & Active Schedule updated!`,
+        text: `✓ Room "${selectedRoom.room}" logged (${json.data.report_number})${photoSummary} & Active Schedule updated!`,
         reportId: json.data.id,
       });
     } catch {
@@ -383,7 +426,7 @@ export default function CleaningReportPage() {
             <button
               type="button"
               disabled={!isOnline || syncingOffline}
-              onClick={() => void handleSyncOfflineQueue()}
+              onClick={() => void handleSyncOfflineQueue(true)}
               style={{
                 padding: '6px 14px',
                 borderRadius: 8,
@@ -439,7 +482,11 @@ export default function CleaningReportPage() {
             <input
               type="date"
               value={selectedDate}
-              onChange={e => setSelectedDate(e.target.value)}
+              onChange={e => {
+                const nextDate = e.target.value;
+                setSelectedDate(nextDate);
+                void handleSelectRoom(selectedRoom, nextDate);
+              }}
               style={{
                 border: 'none',
                 fontSize: 14,

@@ -297,14 +297,14 @@ export function generateDailyCompletionPdf(
       textColor: [30, 41, 59],
     },
     columnStyles: {
-      0: { cellWidth: 18, fontStyle: 'bold' },
-      1: { cellWidth: 32 },
-      2: { cellWidth: 44, fontStyle: 'bold' },
-      3: { cellWidth: 16 },
-      4: { cellWidth: 26 },
+      0: { cellWidth: 16, fontStyle: 'bold' },
+      1: { cellWidth: 28 },
+      2: { cellWidth: 42, fontStyle: 'bold' },
+      3: { cellWidth: 14 },
+      4: { cellWidth: 24 },
       5: { cellWidth: 12 },
-      6: { cellWidth: 26 },
-      7: { cellWidth: 24, fontStyle: 'bold' },
+      6: { cellWidth: 24 },
+      7: { cellWidth: 22, fontStyle: 'bold' },
     },
     didParseCell: hookData => {
       if (hookData.section === 'body' && hookData.column.index === 7) {
@@ -372,6 +372,14 @@ export function generateDailyCompletionPdf(
 
       if (Array.isArray(rec.chemicals_used) && rec.chemicals_used.length > 0) {
         checklistRows.push([`Approved Chemicals Applied: ${rec.chemicals_used.join(', ')}`, 'VERIFIED']);
+      }
+      const preCount = Array.isArray(rec.before_photos) ? rec.before_photos.length : 0;
+      const postCount = Array.isArray(rec.after_photos) ? rec.after_photos.length : 0;
+      if (preCount + postCount > 0) {
+        checklistRows.push([
+          `Photographic Evidence Attached: ${preCount} Pre-Clean & ${postCount} Post-Clean Photo(s)`,
+          'UPLOADED [YES]',
+        ]);
       }
       if (rec.comments) {
         checklistRows.push([`Notes / Comments: ${rec.comments}`, 'LOGGED']);
@@ -533,6 +541,14 @@ export function generateSingleRoomCleanPdf(record: CleaningRecordPdfRow): Buffer
     ['Timestamp Logged', new Date(record.created_at).toLocaleString('en-AU')],
   ];
 
+  const prePhotosCount = Array.isArray(record.before_photos) ? record.before_photos.length : 0;
+  const postPhotosCount = Array.isArray(record.after_photos) ? record.after_photos.length : 0;
+  if (prePhotosCount + postPhotosCount > 0) {
+    detailRows.push([
+      'Photographic Verification Evidence',
+      `${prePhotosCount} Pre-Clean Photo(s) & ${postPhotosCount} Post-Clean Photo(s) Uploaded to Portal`,
+    ]);
+  }
   if (record.comments) {
     detailRows.push(['Comments / Notes', record.comments]);
   }

@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 
+import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -8,13 +9,13 @@ import { generateDailyCompletionPdf, type CleaningRecordPdfRow } from '@/lib/nup
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const admin = createAdminClient();
     const { searchParams } = request.nextUrl;
     const date = searchParams.get('date');
     const zone = searchParams.get('zone');
     const location = searchParams.get('location');
 
-    let query = supabase
+    let query = admin
       .from('nupure_cleaning_records')
       .select('*')
       .order('date', { ascending: false })
@@ -53,12 +54,55 @@ function computeNextCleanDate(dateStr: string, frequencyBadge: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+async function ensurePhotosUploadedToStorage(
+  admin: ReturnType<typeof createAdminClient>,
+  rawPhotos: string[],
+  dateStr: string,
+  prefix: string
+): Promise<string[]> {
+  const uploadedUrls: string[] = [];
+  for (let i = 0; i < rawPhotos.length; i++) {
+    const item = rawPhotos[i];
+    if (!item || typeof item !== 'string') continue;
+    if (item.startsWith('data:image/')) {
+      try {
+        const parts = item.split(',');
+        const mimeMatch = parts[0]?.match(/:(.*?);/);
+        const mimeType = mimeMatch?.[1] || 'image/jpeg';
+        const ext = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : 'jpg';
+        const buffer = Buffer.from(parts[1] || '', 'base64');
+        const filename = `room-clean/${dateStr}/${prefix}_${crypto.randomUUID()}.${ext}`;
+        const { error } = await admin.storage
+          .from('cleaning-photos')
+          .upload(filename, buffer, {
+            contentType: mimeType,
+            upsert: false,
+          });
+        if (!error) {
+          const { data: { publicUrl } } = admin.storage
+            .from('cleaning-photos')
+            .getPublicUrl(filename);
+          uploadedUrls.push(publicUrl);
+          continue;
+        }
+      } catch (uploadErr) {
+        console.error('Fallback base64 photo upload error:', uploadErr);
+      }
+    }
+    uploadedUrls.push(item);
+  }
+  return uploadedUrls;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+    let sessionEmail: string | undefined;
+    try {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      sessionEmail = user?.email ?? undefined;
+    } catch {
+      // Do not fail tablet submissions if the 1-hour JWT cookie expired mid-shift
     }
 
     const body = await request.json();
@@ -81,14 +125,16 @@ export async function POST(request: NextRequest) {
       checklistItems.filter(c => c.completed).map(c => c.label).join(' • ') ||
       'Full scheduled room clean completed';
 
-    const beforePhotos: string[] = Array.isArray(body.before_photos) ? body.before_photos : [];
-    const afterPhotos: string[] = Array.isArray(body.after_photos) ? body.after_photos : [];
+    const rawBeforePhotos: string[] = Array.isArray(body.before_photos) ? body.before_photos : [];
+    const rawAfterPhotos: string[] = Array.isArray(body.after_photos) ? body.after_photos : [];
     const operators: string[] = Array.isArray(body.operators_involved) ? body.operators_involved : [];
     const chemicals: string[] = Array.isArray(body.chemicals_used) ? body.chemicals_used : [];
-    const submittedBy: string = body.submitted_by || user.email || 'MJ Hygiene Team';
+    const submittedBy: string = body.submitted_by || sessionEmail || 'MJ Hygiene Team';
     const supervisorSignoff: string = body.supervisor_signoff || submittedBy;
 
     const admin = createAdminClient();
+    const beforePhotos = await ensurePhotosUploadedToStorage(admin, rawBeforePhotos, dateStr, 'pre');
+    const afterPhotos = await ensurePhotosUploadedToStorage(admin, rawAfterPhotos, dateStr, 'post');
 
     const { data: record, error: insertError } = await admin
       .from('nupure_cleaning_records')

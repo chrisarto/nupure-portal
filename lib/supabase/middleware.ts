@@ -37,11 +37,16 @@ export async function updateSession(request: NextRequest) {
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login')
   const isProtected = 
     request.nextUrl.pathname.startsWith('/dashboard') ||
+    request.nextUrl.pathname.startsWith('/cleaning-report') ||
+    request.nextUrl.pathname.startsWith('/hygiene-services') ||
+    request.nextUrl.pathname.startsWith('/stocktake') ||
+    request.nextUrl.pathname.startsWith('/actions') ||
     request.nextUrl.pathname.startsWith('/documents') ||
     request.nextUrl.pathname.startsWith('/sanitation') ||
     request.nextUrl.pathname.startsWith('/schedule') ||
     request.nextUrl.pathname.startsWith('/staff') ||
-    request.nextUrl.pathname.startsWith('/reports')
+    request.nextUrl.pathname.startsWith('/reports') ||
+    request.nextUrl.pathname.startsWith('/admin')
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()

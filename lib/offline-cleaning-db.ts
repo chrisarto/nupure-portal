@@ -277,63 +277,147 @@ export async function getCachedDailyRecords(date: string): Promise<CachedDailyRe
 
 /* ── Camera & Gallery Photo Compression + Offline-Ready Upload ── */
 
+function readFileAsDataUrlSafe(file: File, timeoutMs = 4000): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        reject(new Error('Timed out reading image file'));
+      }
+    }, timeoutMs);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        const res = typeof reader.result === 'string' ? reader.result : '';
+        if (res) resolve(res);
+        else reject(new Error('Empty file result'));
+      };
+      reader.onerror = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(new Error('Failed to read photo file'));
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      if (!settled) {
+        settled = true;
+        clearTimeout(timer);
+        reject(err instanceof Error ? err : new Error('FileReader exception'));
+      }
+    }
+  });
+}
+
+function compressImageToBlobSafe(
+  file: File,
+  maxDimension = 1280,
+  quality = 0.78,
+  timeoutMs = 2500
+): Promise<{ blob: Blob; dataUrl: string } | null> {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return Promise.resolve(null);
+  }
+  return new Promise(resolve => {
+    let settled = false;
+    let objectUrl = '';
+
+    const finish = (result: { blob: Blob; dataUrl: string } | null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (objectUrl) {
+        try {
+          URL.revokeObjectURL(objectUrl);
+        } catch {
+          // Ignore revoke errors
+        }
+      }
+      resolve(result);
+    };
+
+    const timer = setTimeout(() => {
+      finish(null);
+    }, timeoutMs);
+
+    try {
+      objectUrl = typeof URL !== 'undefined' && URL.createObjectURL ? URL.createObjectURL(file) : '';
+      if (!objectUrl) {
+        finish(null);
+        return;
+      }
+
+      const img = new Image();
+      img.onload = () => {
+        try {
+          let { width, height } = img;
+          if (!width || !height) {
+            finish(null);
+            return;
+          }
+          if (width > maxDimension || height > maxDimension) {
+            if (width >= height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            finish(null);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          canvas.toBlob(
+            blob => {
+              if (blob) {
+                finish({ blob, dataUrl });
+              } else if (dataUrl && dataUrl.startsWith('data:image/')) {
+                finish({ blob: dataUrlToBlob(dataUrl), dataUrl });
+              } else {
+                finish(null);
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        } catch {
+          finish(null);
+        }
+      };
+
+      img.onerror = () => {
+        finish(null);
+      };
+
+      img.src = objectUrl;
+    } catch {
+      finish(null);
+    }
+  });
+}
+
 export async function compressImageToDataUrl(
   file: File,
   maxDimension = 1280,
   quality = 0.78
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const objectUrl = typeof URL !== 'undefined' && URL.createObjectURL ? URL.createObjectURL(file) : '';
-    const img = new Image();
-
-    img.onload = () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-      let { width, height } = img;
-      if (width > maxDimension || height > maxDimension) {
-        if (width >= height) {
-          height = Math.round((height * maxDimension) / width);
-          width = maxDimension;
-        } else {
-          width = Math.round((width * maxDimension) / height);
-          height = maxDimension;
-        }
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('Canvas context unavailable'));
-        return;
-      }
-      ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
-    };
-
-    img.onerror = () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-      // Fallback to FileReader if object URL fails
-      const reader = new FileReader();
-      reader.onload = () => {
-        const res = typeof reader.result === 'string' ? reader.result : '';
-        if (res) resolve(res);
-        else reject(new Error('Failed to decode photo'));
-      };
-      reader.onerror = () => reject(new Error('Failed to read photo file'));
-      reader.readAsDataURL(file);
-    };
-
-    if (objectUrl) {
-      img.src = objectUrl;
-    } else {
-      const reader = new FileReader();
-      reader.onload = () => {
-        img.src = typeof reader.result === 'string' ? reader.result : '';
-      };
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsDataURL(file);
-    }
-  });
+  const compressed = await compressImageToBlobSafe(file, maxDimension, quality, 2500);
+  if (compressed?.dataUrl) {
+    return compressed.dataUrl;
+  }
+  return readFileAsDataUrlSafe(file, 4000);
 }
 
 export function dataUrlToBlob(dataUrl: string): Blob {
@@ -352,27 +436,61 @@ export async function uploadOrStagePhoto(
   file: File,
   uploadEndpoint = '/api/cleaning-records/upload'
 ): Promise<{ url: string; storedOffline: boolean }> {
-  const compressedDataUrl = await compressImageToDataUrl(file);
+  const compressed = await compressImageToBlobSafe(file, 1280, 0.78, 2500);
+  const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
 
-  if (typeof navigator !== 'undefined' && !navigator.onLine) {
-    return { url: compressedDataUrl, storedOffline: true };
+  if (isOnline) {
+    const rawSafeName = (file.name || 'photo.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
+    const uploadBlob: Blob = compressed ? compressed.blob : file;
+    const uploadFilename = compressed
+      ? rawSafeName.replace(/\.[a-zA-Z0-9]+$/, '') + '.jpg'
+      : rawSafeName;
+
+    // 1. Primary Multipart FormData Upload (supports both compressed JPEG and raw File fallback)
+    try {
+      const fd = new FormData();
+      fd.append('file', uploadBlob, uploadFilename);
+      const res = await fetch(uploadEndpoint, { method: 'POST', body: fd });
+      if (res.ok) {
+        const json = (await res.json()) as { url?: string };
+        if (json.url) {
+          return { url: json.url, storedOffline: false };
+        }
+      }
+    } catch {
+      // Fall through to JSON dataUrl upload or offline staging
+    }
+
+    // 2. Secondary JSON Base64 Upload Fallback
+    try {
+      const fallbackDataUrl = compressed?.dataUrl ?? (await readFileAsDataUrlSafe(file, 4000));
+      if (fallbackDataUrl) {
+        const res = await fetch(uploadEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataUrl: fallbackDataUrl, filename: uploadFilename }),
+        });
+        if (res.ok) {
+          const json = (await res.json()) as { url?: string };
+          if (json.url) {
+            return { url: json.url, storedOffline: false };
+          }
+        }
+        return { url: fallbackDataUrl, storedOffline: true };
+      }
+    } catch {
+      // Fall through to offline dataUrl return
+    }
   }
 
+  // 3. Offline Staging Fallback
   try {
-    const blob = dataUrlToBlob(compressedDataUrl);
-    const safeName = (file.name || 'photo.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
-    const fd = new FormData();
-    fd.append('file', blob, safeName.endsWith('.jpg') ? safeName : `${safeName}.jpg`);
-    const res = await fetch(uploadEndpoint, { method: 'POST', body: fd });
-    if (res.ok) {
-      const json = (await res.json()) as { url?: string };
-      if (json.url) {
-        return { url: json.url, storedOffline: false };
-      }
-    }
-    return { url: compressedDataUrl, storedOffline: true };
+    const dataUrl = compressed?.dataUrl ?? (await readFileAsDataUrlSafe(file, 4000));
+    return { url: dataUrl, storedOffline: true };
   } catch {
-    return { url: compressedDataUrl, storedOffline: true };
+    // Last-resort object URL if FileReader fails on restricted mobile URI
+    const objUrl = typeof URL !== 'undefined' && URL.createObjectURL ? URL.createObjectURL(file) : '';
+    return { url: objUrl, storedOffline: true };
   }
 }
 

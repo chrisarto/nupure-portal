@@ -74,8 +74,18 @@ export default function CleaningReportPage() {
   const [syncingOffline, setSyncingOffline] = useState<boolean>(false);
   const [loadingRecords, setLoadingRecords] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [updatingExisting, setUpdatingExisting] = useState<boolean>(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string; reportId?: string } | null>(null);
   const [draftHydrated, setDraftHydrated] = useState<boolean>(false);
+
+  // Quick Complete All Rooms (Bulk Tick + Untick Exceptions) State
+  const [showQuickCompleteModal, setShowQuickCompleteModal] = useState<boolean>(false);
+  const [quickTickedRooms, setQuickTickedRooms] = useState<Record<string, boolean>>({});
+  const [quickRoomTasks, setQuickRoomTasks] = useState<Record<string, Record<number, boolean>>>({});
+  const [quickRoomBeforePhotos, setQuickRoomBeforePhotos] = useState<Record<string, string[]>>({});
+  const [quickRoomAfterPhotos, setQuickRoomAfterPhotos] = useState<Record<string, string[]>>({});
+  const [quickExpandedRoomId, setQuickExpandedRoomId] = useState<string | null>(null);
+  const [submittingQuickAll, setSubmittingQuickAll] = useState<boolean>(false);
 
   const refreshPendingQueue = useCallback(async () => {
     const queued = await getPendingCleaningReports();
@@ -169,6 +179,13 @@ export default function CleaningReportPage() {
     setDraftHydrated(false);
     setSelectedRoom(room);
     setToast(null);
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.setItem('nupure_selected_room_id', room.id);
+      }
+    } catch {
+      // Ignore sessionStorage errors
+    }
 
     const savedDraft = await getRoomDraft(activeDate, room.code);
     if (savedDraft) {
@@ -208,7 +225,17 @@ export default function CleaningReportPage() {
     initialRoomSelectedRef.current = true;
     const params = new URLSearchParams(window.location.search);
     const roomParam = params.get('room');
-    const matched = roomParam ? NUPURE_ROOMS.find(r => r.room === roomParam) : undefined;
+    let matched = roomParam ? NUPURE_ROOMS.find(r => r.room === roomParam || r.id === roomParam) : undefined;
+    if (!matched) {
+      try {
+        const storedId = window.sessionStorage?.getItem('nupure_selected_room_id');
+        if (storedId) {
+          matched = NUPURE_ROOMS.find(r => r.id === storedId);
+        }
+      } catch {
+        // Ignore
+      }
+    }
     void handleSelectRoom(matched ?? NUPURE_ROOMS[0]);
   }, [handleSelectRoom]);
 
@@ -259,6 +286,74 @@ export default function CleaningReportPage() {
     setSelectedChemicals(prev =>
       prev.includes(chem) ? prev.filter(c => c !== chem) : [...prev, chem]
     );
+  };
+
+  const existingRecordForSelectedRoom = todayRecords.find(r => r.location === selectedRoom.room);
+
+  const handleUpdateExistingRoomReport = async () => {
+    if (!existingRecordForSelectedRoom) return;
+    setUpdatingExisting(true);
+    setToast(null);
+    try {
+      const checklistPayload = selectedRoom.checklist.map((label, idx) => ({
+        label,
+        completed: !!checkedItems[idx],
+      }));
+      if (sanitaryBinChanged) {
+        checklistPayload.push({
+          label: 'Sanitary Bin Liner Replaced, Unit Sanitised & Waste Collected',
+          completed: true,
+        });
+      }
+      if (airFreshenerChanged) {
+        checklistPayload.push({
+          label: 'Automatic Air Freshener Refill / Battery Changed & Spray Checked',
+          completed: true,
+        });
+      }
+
+      const finalBefore = await resolvePhotoUrlsBeforeSync([
+        ...(existingRecordForSelectedRoom.before_photos ?? []),
+        ...beforePhotos,
+      ]);
+      const finalAfter = await resolvePhotoUrlsBeforeSync([
+        ...(existingRecordForSelectedRoom.after_photos ?? []),
+        ...afterPhotos,
+      ]);
+
+      const res = await fetch(`/api/cleaning-records/${existingRecordForSelectedRoom.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          before_photos: finalBefore,
+          after_photos: finalAfter,
+          checklist_items: checklistPayload,
+          comments: comments || undefined,
+          visual_inspection_passed: visualPassed,
+        }),
+      });
+      const json = (await res.json()) as { data?: { id: string; report_number: string }; error?: string };
+      if (!res.ok || !json.data) {
+        throw new Error(json.error || 'Failed to update existing room report');
+      }
+
+      setBeforePhotos([]);
+      setAfterPhotos([]);
+      await deleteRoomDraft(selectedDate, selectedRoom.code);
+      await loadRecordsForDate(selectedDate);
+      setToast({
+        type: 'success',
+        text: `✓ Updated "${selectedRoom.room}" (${json.data.report_number}) with ${finalBefore.length + finalAfter.length} photo(s) & updated Daily Completion PDF!`,
+        reportId: json.data.id,
+      });
+    } catch (err) {
+      setToast({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Error updating existing report',
+      });
+    } finally {
+      setUpdatingExisting(false);
+    }
   };
 
   const handleSubmitRoomReport = async (e: React.FormEvent) => {
@@ -373,6 +468,151 @@ export default function CleaningReportPage() {
     ...pendingForSelectedDate.map(q => q.payload.location),
   ]);
   const offlineQueuedRoomNames = new Set(pendingForSelectedDate.map(q => q.payload.location));
+
+  const openQuickCompleteModal = () => {
+    const dObj = new Date(`${selectedDate}T00:00:00`);
+    const isWeekendDate = dObj.getDay() === 0 || dObj.getDay() === 6;
+    const nextTicked: Record<string, boolean> = {};
+    const nextTasks: Record<string, Record<number, boolean>> = {};
+
+    for (const r of NUPURE_ROOMS) {
+      const isDueToday = r.frequencyBadge === '7 DAYS' || (r.frequencyBadge === '5 DAYS' && !isWeekendDate);
+      const isAlreadyDone = completedRoomNames.has(r.room);
+      nextTicked[r.id] = isDueToday && !isAlreadyDone;
+
+      const tMap: Record<number, boolean> = {};
+      r.checklist.forEach((_, idx) => {
+        tMap[idx] = true;
+      });
+      nextTasks[r.id] = tMap;
+    }
+
+    // If all scheduled rooms were already done, pre-tick all remaining uncompleted rooms
+    if (Object.values(nextTicked).filter(Boolean).length === 0) {
+      for (const r of NUPURE_ROOMS) {
+        if (!completedRoomNames.has(r.room)) {
+          nextTicked[r.id] = true;
+        }
+      }
+    }
+
+    setQuickTickedRooms(nextTicked);
+    setQuickRoomTasks(nextTasks);
+    setQuickRoomBeforePhotos({});
+    setQuickRoomAfterPhotos({});
+    setQuickExpandedRoomId(null);
+    setShowQuickCompleteModal(true);
+  };
+
+  const handleSubmitQuickCompleteAll = async () => {
+    const selectedRoomsList = NUPURE_ROOMS.filter(r => quickTickedRooms[r.id]);
+    if (selectedRoomsList.length === 0) {
+      setToast({
+        type: 'error',
+        text: 'Please keep at least one completed room ticked before submitting.',
+      });
+      return;
+    }
+
+    setSubmittingQuickAll(true);
+    setToast(null);
+
+    const payloads: CleaningReportPayload[] = [];
+    for (const room of selectedRoomsList) {
+      const taskMap = quickRoomTasks[room.id] || {};
+      const checklistPayload = room.checklist.map((label, idx) => ({
+        label,
+        completed: taskMap[idx] !== false,
+      }));
+      const rawBefore = quickRoomBeforePhotos[room.id] || [];
+      const rawAfter = quickRoomAfterPhotos[room.id] || [];
+
+      const resolvedBefore =
+        typeof navigator === 'undefined' || navigator.onLine
+          ? await resolvePhotoUrlsBeforeSync(rawBefore)
+          : rawBefore;
+      const resolvedAfter =
+        typeof navigator === 'undefined' || navigator.onLine
+          ? await resolvePhotoUrlsBeforeSync(rawAfter)
+          : rawAfter;
+
+      payloads.push({
+        date: selectedDate,
+        zone: room.zone,
+        location: room.room,
+        frequency_badge: room.frequencyBadge,
+        checklist_items: checklistPayload,
+        total_time_minutes: room.estimatedMinutes,
+        shift_type: shiftType,
+        cleaning_type:
+          room.frequencyBadge === 'WEEKLY'
+            ? 'Weekly Hygiene Service'
+            : 'Scheduled Daily Hygiene Clean',
+        chemicals_used: selectedChemicals,
+        operators_involved: operatorName
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean),
+        supervisor_signoff: supervisorName,
+        visual_inspection_passed: true,
+        ssop_verified: true,
+        sanitary_bin_changed: false,
+        air_freshener_changed: false,
+        comments: '',
+        corrective_actions: '',
+        before_photos: resolvedBefore,
+        after_photos: resolvedAfter,
+        submitted_by: operatorName,
+        schedule_event_id: `ev_${room.id}`,
+      });
+    }
+
+    try {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        throw new Error('OFFLINE_MODE');
+      }
+
+      const res = await fetch('/api/cleaning-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          batch_reports: payloads,
+        }),
+      });
+
+      const json = (await res.json()) as { count?: number; error?: string };
+      if (!res.ok) {
+        throw new Error(json.error || 'Failed to save batch room reports');
+      }
+
+      for (const room of selectedRoomsList) {
+        await deleteRoomDraft(selectedDate, room.code);
+      }
+      setShowQuickCompleteModal(false);
+      await loadRecordsForDate(selectedDate);
+      setToast({
+        type: 'success',
+        text: `✓ Quick Completed ${selectedRoomsList.length} room${selectedRoomsList.length === 1 ? '' : 's'} for ${selectedDate} & updated the Daily Completion Report PDF!`,
+      });
+    } catch {
+      // Offline queue fallback for all ticked rooms
+      for (let i = 0; i < selectedRoomsList.length; i++) {
+        const room = selectedRoomsList[i];
+        await enqueueOfflineCleaningReport(room.code, payloads[i]);
+        await deleteRoomDraft(selectedDate, room.code);
+      }
+      setShowQuickCompleteModal(false);
+      await refreshPendingQueue();
+      setToast({
+        type: 'success',
+        text: `⚡ Saved ${selectedRoomsList.length} completed room${selectedRoomsList.length === 1 ? '' : 's'} to Device Offline Queue! They will auto-sync as soon as internet returns.`,
+      });
+    } finally {
+      setSubmittingQuickAll(false);
+    }
+  };
+
+  const quickTickedCount = Object.values(quickTickedRooms).filter(Boolean).length;
 
   const filteredRooms =
     selectedZone === 'All Zones'
@@ -612,24 +852,59 @@ export default function CleaningReportPage() {
         </div>
       </div>
 
-      {/* Site Progress Bar */}
+      {/* Site Progress Bar + Quick Complete All Trigger */}
       <div
         style={{
           background: '#ffffff',
           border: '1px solid #e2e8f0',
           borderRadius: 12,
           padding: '16px 20px',
-          marginBottom: 24,
+          marginBottom: 20,
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
-            Daily Room Completion Progress ({selectedDate})
-          </span>
-          <span style={{ fontSize: 13, fontWeight: 800, color: '#0284c7' }}>
-            {completedCount} of {NUPURE_ROOMS.length} Rooms / Areas Completed ({progressPct}%)
-          </span>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+            marginBottom: 12,
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a' }}>
+              Daily Room Completion Progress ({selectedDate}) — {completedCount} of {NUPURE_ROOMS.length} Rooms Completed ({progressPct}%)
+            </div>
+            <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+              Tip: Press <strong>&ldquo;⚡ Quick Complete All Rooms&rdquo;</strong> to tick all scheduled rooms at once, then simply untick any room or task that wasn&apos;t completed.
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (showQuickCompleteModal) setShowQuickCompleteModal(false);
+              else openQuickCompleteModal();
+            }}
+            style={{
+              background: 'linear-gradient(135deg, #15803d, #16a34a)',
+              color: '#ffffff',
+              border: 'none',
+              padding: '11px 20px',
+              borderRadius: 10,
+              fontSize: 13.5,
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.28)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>⚡ Quick Complete All Rooms (Then Untick Exceptions)</span>
+          </button>
         </div>
         <div style={{ width: '100%', height: 10, background: '#f1f5f9', borderRadius: 999, overflow: 'hidden' }}>
           <div
@@ -642,6 +917,385 @@ export default function CleaningReportPage() {
           />
         </div>
       </div>
+
+      {/* Interactive Quick Complete All Rooms Panel */}
+      {showQuickCompleteModal && (
+        <div
+          style={{
+            background: '#f0fdf4',
+            border: '2px solid #16a34a',
+            borderRadius: 14,
+            padding: 22,
+            marginBottom: 24,
+            boxShadow: '0 6px 18px rgba(22, 163, 74, 0.14)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              flexWrap: 'wrap',
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                ⚡ Fast Team Sign-Off Mode &bull; Shift Date: {selectedDate}
+              </div>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: '4px 0' }}>
+                Quick Complete All Rooms — Untick Anything That Wasn&apos;t Completed
+              </h2>
+              <p style={{ fontSize: 13.5, color: '#334155', margin: 0 }}>
+                All scheduled rooms are pre-ticked (<strong style={{ color: '#15803d' }}>✓</strong>). Simply{' '}
+                <strong>untick any room</strong> that wasn&apos;t completed — or tap{' '}
+                <strong>&ldquo;Tasks / + Photos&rdquo;</strong> on any room to untick specific tasks or attach photos — then press{' '}
+                <strong>Complete &amp; Sign Off Ticked Rooms</strong>.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const next: Record<string, boolean> = {};
+                  NUPURE_ROOMS.forEach(r => {
+                    if (!completedRoomNames.has(r.room)) next[r.id] = true;
+                  });
+                  setQuickTickedRooms(next);
+                }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                  border: '1px solid #16a34a',
+                  background: '#ffffff',
+                  color: '#15803d',
+                  fontSize: 12.5,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                ✓ Tick All Remaining Rooms
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const next: Record<string, boolean> = {};
+                  NUPURE_ROOMS.forEach(r => {
+                    next[r.id] = true;
+                  });
+                  setQuickTickedRooms(next);
+                }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                  border: '1px solid #0284c7',
+                  background: '#ffffff',
+                  color: '#0284c7',
+                  fontSize: 12.5,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                ✓ Tick All 30 Scope Rooms
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuickTickedRooms({})}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#475569',
+                  fontSize: 12.5,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                ☐ Untick All
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowQuickCompleteModal(false)}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                ✕ Close
+              </button>
+            </div>
+          </div>
+
+          {/* Cleaner & Supervisor Sign-off Bar for Batch */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: 12,
+              background: '#ffffff',
+              padding: 14,
+              borderRadius: 10,
+              border: '1px solid #bbf7d0',
+              marginBottom: 14,
+            }}
+          >
+            <div>
+              <label style={{ display: 'block', fontSize: 11.5, fontWeight: 800, color: '#334155', marginBottom: 4 }}>
+                Cleaner(s) / Team Member(s)
+              </label>
+              <input
+                type="text"
+                value={operatorName}
+                onChange={e => setOperatorName(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  border: '1px solid #cbd5e1',
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11.5, fontWeight: 800, color: '#334155', marginBottom: 4 }}>
+                Supervisor Sign-Off
+              </label>
+              <input
+                type="text"
+                value={supervisorName}
+                onChange={e => setSupervisorName(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  border: '1px solid #cbd5e1',
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Room Grid with Tick / Untick + Expandable Tasks & Photo Loader */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: 10,
+              maxHeight: 480,
+              overflowY: 'auto',
+              padding: 4,
+              marginBottom: 16,
+            }}
+          >
+            {NUPURE_ROOMS.map(room => {
+              const isAlreadyDone = completedRoomNames.has(room.room);
+              const isTicked = !!quickTickedRooms[room.id];
+              const isExpanded = quickExpandedRoomId === room.id;
+              const taskMap = quickRoomTasks[room.id] || {};
+              const completedTasksCount = room.checklist.filter((_, idx) => taskMap[idx] !== false).length;
+              const roomPhotoCount =
+                (quickRoomBeforePhotos[room.id]?.length || 0) + (quickRoomAfterPhotos[room.id]?.length || 0);
+
+              return (
+                <div
+                  key={room.id}
+                  style={{
+                    background: isTicked ? '#ffffff' : isAlreadyDone ? '#f8fafc' : '#fff1f2',
+                    border: isTicked
+                      ? '2px solid #16a34a'
+                      : isAlreadyDone
+                        ? '1px solid #cbd5e1'
+                        : '1px solid #fecaca',
+                    borderRadius: 10,
+                    padding: '11px 13px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        cursor: 'pointer',
+                        flex: 1,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isTicked}
+                        onChange={e =>
+                          setQuickTickedRooms(prev => ({
+                            ...prev,
+                            [room.id]: e.target.checked,
+                          }))
+                        }
+                        style={{ width: 20, height: 20, accentColor: '#16a34a', cursor: 'pointer' }}
+                      />
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: '#64748b' }}>
+                          {room.code} &bull; {room.zone} ({room.frequencyBadge})
+                        </div>
+                        <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a' }}>
+                          {room.room}
+                          {isAlreadyDone && (
+                            <span style={{ marginLeft: 6, fontSize: 11, color: '#15803d', fontWeight: 800 }}>
+                              (Logged ✓)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => setQuickExpandedRoomId(isExpanded ? null : room.id)}
+                      style={{
+                        padding: '5px 9px',
+                        borderRadius: 6,
+                        border: '1px solid #cbd5e1',
+                        background: isExpanded ? '#e0f2fe' : '#f8fafc',
+                        color: '#0284c7',
+                        fontSize: 11,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {isExpanded
+                        ? 'Hide'
+                        : `Tasks (${completedTasksCount}/${room.checklist.length})${roomPhotoCount > 0 ? ` • 📷${roomPhotoCount}` : ' / +📷'}`}
+                    </button>
+                  </div>
+
+                  {isExpanded && (
+                    <div
+                      style={{
+                        marginTop: 10,
+                        paddingTop: 10,
+                        borderTop: '1px solid #e2e8f0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 8,
+                      }}
+                    >
+                      <div style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>
+                        Untick Any Task Not Completed:
+                      </div>
+                      {room.checklist.map((taskLabel, tIdx) => {
+                        const tChecked = taskMap[tIdx] !== false;
+                        return (
+                          <label
+                            key={tIdx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: 8,
+                              fontSize: 12.5,
+                              color: tChecked ? '#0f172a' : '#dc2626',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={tChecked}
+                              onChange={e =>
+                                setQuickRoomTasks(prev => ({
+                                  ...prev,
+                                  [room.id]: {
+                                    ...(prev[room.id] || {}),
+                                    [tIdx]: e.target.checked,
+                                  },
+                                }))
+                              }
+                              style={{ width: 16, height: 16, marginTop: 2, accentColor: '#16a34a' }}
+                            />
+                            <span>{taskLabel}</span>
+                          </label>
+                        );
+                      })}
+
+                      <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <PhotoCaptureControl
+                          label="Pre-Clean Photos"
+                          photos={quickRoomBeforePhotos[room.id] || []}
+                          onChange={next =>
+                            setQuickRoomBeforePhotos(prev => ({
+                              ...prev,
+                              [room.id]: next,
+                            }))
+                          }
+                          uploadEndpoint="/api/cleaning-records/upload"
+                          disabled={submittingQuickAll}
+                        />
+                        <PhotoCaptureControl
+                          label="Post-Clean Photos"
+                          photos={quickRoomAfterPhotos[room.id] || []}
+                          onChange={next =>
+                            setQuickRoomAfterPhotos(prev => ({
+                              ...prev,
+                              [room.id]: next,
+                            }))
+                          }
+                          uploadEndpoint="/api/cleaning-records/upload"
+                          disabled={submittingQuickAll}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 12,
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#15803d' }}>
+              {quickTickedCount} Room{quickTickedCount === 1 ? '' : 's'} Ticked as Completed &bull;{' '}
+              {NUPURE_ROOMS.length - quickTickedCount} Unticked / Skipped
+            </div>
+            <button
+              type="button"
+              disabled={submittingQuickAll || quickTickedCount === 0}
+              onClick={() => void handleSubmitQuickCompleteAll()}
+              style={{
+                background:
+                  quickTickedCount === 0 ? '#94a3b8' : 'linear-gradient(135deg, #15803d, #16a34a)',
+                color: '#ffffff',
+                border: 'none',
+                padding: '14px 28px',
+                borderRadius: 10,
+                fontSize: 15,
+                fontWeight: 800,
+                cursor: submittingQuickAll || quickTickedCount === 0 ? 'not-allowed' : 'pointer',
+                boxShadow: '0 3px 10px rgba(22, 163, 74, 0.25)',
+              }}
+            >
+              {submittingQuickAll
+                ? `Saving ${quickTickedCount} Completed Room Reports...`
+                : `✓ Complete & Sign Off Ticked Rooms (${quickTickedCount} Room${quickTickedCount === 1 ? '' : 's'}) →`}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Zone Filter Pills */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
@@ -893,13 +1547,57 @@ export default function CleaningReportPage() {
                   background: '#f0fdf4',
                   border: '1px solid #bbf7d0',
                   color: '#15803d',
-                  padding: '8px 14px',
-                  borderRadius: 8,
+                  padding: '10px 14px',
+                  borderRadius: 10,
                   fontSize: 13,
                   fontWeight: 700,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
                 }}
               >
-                ✓ Completed for {selectedDate} (Submitting again logs an additional clean)
+                <div>
+                  ✓ Completed for {selectedDate}
+                  {existingRecordForSelectedRoom ? ` (${existingRecordForSelectedRoom.report_number})` : ''}
+                </div>
+                {existingRecordForSelectedRoom && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      disabled={updatingExisting}
+                      onClick={() => void handleUpdateExistingRoomReport()}
+                      style={{
+                        background: '#0284c7',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: 6,
+                        fontSize: 12,
+                        fontWeight: 800,
+                        cursor: updatingExisting ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {updatingExisting
+                        ? '⏳ Updating Report...'
+                        : `📷 Save Loaded Photos / Tasks to ${existingRecordForSelectedRoom.report_number}`}
+                    </button>
+                    <Link
+                      href={`/reports/cleaning-events/${existingRecordForSelectedRoom.id}`}
+                      style={{
+                        background: '#ffffff',
+                        color: '#0f3460',
+                        border: '1px solid #cbd5e1',
+                        padding: '5px 10px',
+                        borderRadius: 6,
+                        fontSize: 12,
+                        fontWeight: 800,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      View Report →
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1042,32 +1740,70 @@ export default function CleaningReportPage() {
 
           {/* Room Task Checklist */}
           <div style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <label style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', color: '#334155' }}>
-                Room Task Checklist ({Object.values(checkedItems).filter(Boolean).length}/{selectedRoom.checklist.length} Completed)
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  const next: Record<number, boolean> = {};
-                  selectedRoom.checklist.forEach((_, idx) => {
-                    next[idx] = true;
-                  });
-                  setCheckedItems(next);
-                }}
-                style={{
-                  background: '#f1f5f9',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  padding: '4px 10px',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: '#0f3460',
-                  cursor: 'pointer',
-                }}
-              >
-                ✓ Tick All Tasks
-              </button>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 10,
+                marginBottom: 10,
+              }}
+            >
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', color: '#334155', display: 'block' }}>
+                  Room Task Checklist ({Object.values(checkedItems).filter(Boolean).length}/{selectedRoom.checklist.length} Completed)
+                </label>
+                <span style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>
+                  Press &ldquo;Quick Complete All Tasks&rdquo; below, then simply untick any item that wasn&apos;t completed.
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next: Record<number, boolean> = {};
+                    selectedRoom.checklist.forEach((_, idx) => {
+                      next[idx] = true;
+                    });
+                    setCheckedItems(next);
+                  }}
+                  style={{
+                    background: '#16a34a',
+                    border: '1px solid #15803d',
+                    borderRadius: 8,
+                    padding: '7px 14px',
+                    fontSize: 12.5,
+                    fontWeight: 800,
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ⚡ Quick Complete All Tasks
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next: Record<number, boolean> = {};
+                    selectedRoom.checklist.forEach((_, idx) => {
+                      next[idx] = false;
+                    });
+                    setCheckedItems(next);
+                  }}
+                  style={{
+                    background: '#f8fafc',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: 8,
+                    padding: '7px 12px',
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    color: '#475569',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ☐ Untick All Tasks
+                </button>
+              </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1078,25 +1814,41 @@ export default function CleaningReportPage() {
                     key={idx}
                     style={{
                       display: 'flex',
-                      alignItems: 'flex-start',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                       gap: 12,
                       padding: '12px 14px',
                       borderRadius: 10,
-                      border: checked ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
-                      background: checked ? '#f0fdf4' : '#f8fafc',
+                      border: checked ? '1px solid #bbf7d0' : '1px solid #fecaca',
+                      background: checked ? '#f0fdf4' : '#fff1f2',
                       cursor: 'pointer',
                       fontSize: 14,
                       fontWeight: 600,
                       color: '#0f172a',
                     }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={e => setCheckedItems(prev => ({ ...prev, [idx]: e.target.checked }))}
-                      style={{ width: 18, height: 18, marginTop: 2, accentColor: '#16a34a' }}
-                    />
-                    <span>{taskLabel}</span>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={e => setCheckedItems(prev => ({ ...prev, [idx]: e.target.checked }))}
+                        style={{ width: 19, height: 19, marginTop: 1, accentColor: '#16a34a', cursor: 'pointer' }}
+                      />
+                      <span>{taskLabel}</span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        background: checked ? '#dcfce7' : '#fee2e2',
+                        color: checked ? '#15803d' : '#dc2626',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {checked ? 'COMPLETED ✓' : 'UNTICKED'}
+                    </span>
                   </label>
                 );
               })}
@@ -1380,12 +2132,36 @@ export default function CleaningReportPage() {
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+            {existingRecordForSelectedRoom && (
+              <button
+                type="button"
+                disabled={updatingExisting || submitting}
+                onClick={() => void handleUpdateExistingRoomReport()}
+                style={{
+                  flex: '1 1 280px',
+                  maxWidth: 460,
+                  background: 'linear-gradient(135deg, #15803d, #16a34a)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '15px 22px',
+                  borderRadius: 10,
+                  fontSize: 14.5,
+                  fontWeight: 800,
+                  cursor: updatingExisting || submitting ? 'not-allowed' : 'pointer',
+                  opacity: updatingExisting ? 0.7 : 1,
+                }}
+              >
+                {updatingExisting
+                  ? 'Saving Photos & Updates...'
+                  : `📷 Save Photos & Checklist to Existing Report (${existingRecordForSelectedRoom.report_number})`}
+              </button>
+            )}
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || updatingExisting}
               style={{
-                width: '100%',
+                flex: '1 1 280px',
                 maxWidth: 460,
                 background: 'linear-gradient(135deg, #0f3460, #0284c7)',
                 color: '#ffffff',
@@ -1394,14 +2170,16 @@ export default function CleaningReportPage() {
                 borderRadius: 10,
                 fontSize: 15,
                 fontWeight: 800,
-                cursor: submitting ? 'not-allowed' : 'pointer',
+                cursor: submitting || updatingExisting ? 'not-allowed' : 'pointer',
                 opacity: submitting ? 0.7 : 1,
               }}
             >
               {submitting
                 ? 'Saving Room Report...'
                 : isOnline
-                  ? `Complete & Sign Off "${selectedRoom.room}" →`
+                  ? existingRecordForSelectedRoom
+                    ? `+ Log Additional Clean for "${selectedRoom.room}" →`
+                    : `Complete & Sign Off "${selectedRoom.room}" →`
                   : `⚡ Save "${selectedRoom.room}" Offline (Auto-Sync Later) →`}
             </button>
           </div>

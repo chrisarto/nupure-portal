@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { PhotoCaptureControl } from '@/app/components/PhotoCaptureControl';
 
 interface CleaningRecordDetail {
   id: string;
@@ -35,13 +36,69 @@ export default function CleaningEventDetailPage() {
   const [record, setRecord] = useState<CleaningRecordDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Interactive Photo Upload & Checklist Edit State
+  const [showPhotoUploader, setShowPhotoUploader] = useState<boolean>(false);
+  const [beforePhotos, setBeforePhotos] = useState<string[]>([]);
+  const [afterPhotos, setAfterPhotos] = useState<string[]>([]);
+  const [checklistItems, setChecklistItems] = useState<Array<{ label: string; completed: boolean }>>([]);
+  const [savingChanges, setSavingChanges] = useState<boolean>(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   useEffect(() => {
     if (!params?.id) return;
     fetch(`/api/cleaning-records/${params.id}`)
       .then(r => r.json())
-      .then(j => setRecord(j.data ?? null))
+      .then((j: { data?: CleaningRecordDetail }) => {
+        const rec = j.data ?? null;
+        setRecord(rec);
+        if (rec) {
+          setBeforePhotos(Array.isArray(rec.before_photos) ? rec.before_photos : []);
+          setAfterPhotos(Array.isArray(rec.after_photos) ? rec.after_photos : []);
+          setChecklistItems(Array.isArray(rec.checklist_items) ? rec.checklist_items : []);
+        }
+      })
       .finally(() => setLoading(false));
   }, [params?.id]);
+
+  const handleSavePhotosAndTasks = async (
+    nextBefore = beforePhotos,
+    nextAfter = afterPhotos,
+    nextChecklist = checklistItems
+  ) => {
+    if (!record) return;
+    setSavingChanges(true);
+    setToast(null);
+    try {
+      const res = await fetch(`/api/cleaning-records/${record.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          before_photos: nextBefore,
+          after_photos: nextAfter,
+          checklist_items: nextChecklist,
+        }),
+      });
+      const json = (await res.json()) as { data?: CleaningRecordDetail; error?: string };
+      if (!res.ok || !json.data) {
+        throw new Error(json.error || 'Failed to save changes to report');
+      }
+      setRecord(json.data);
+      setBeforePhotos(Array.isArray(json.data.before_photos) ? json.data.before_photos : []);
+      setAfterPhotos(Array.isArray(json.data.after_photos) ? json.data.after_photos : []);
+      setChecklistItems(Array.isArray(json.data.checklist_items) ? json.data.checklist_items : []);
+      setToast({
+        type: 'success',
+        text: `✓ Saved photos & checklist updates to Report ${json.data.report_number} (Daily PDF updated)!`,
+      });
+    } catch (err) {
+      setToast({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Error updating report',
+      });
+    } finally {
+      setSavingChanges(false);
+    }
+  };
 
   if (loading) {
     return <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Loading Room Cleaning Event Report...</div>;
@@ -58,6 +115,8 @@ export default function CleaningEventDetailPage() {
     );
   }
 
+  const totalPhotosCount = beforePhotos.length + afterPhotos.length;
+
   return (
     <div style={{ padding: '28px 32px', maxWidth: 960, margin: '0 auto' }}>
       {/* Action Bar */}
@@ -66,6 +125,8 @@ export default function CleaningEventDetailPage() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12,
           marginBottom: 20,
         }}
       >
@@ -77,6 +138,22 @@ export default function CleaningEventDetailPage() {
         </Link>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => setShowPhotoUploader(prev => !prev)}
+            style={{
+              padding: '9px 16px',
+              borderRadius: 8,
+              border: '1px solid #0284c7',
+              background: showPhotoUploader ? '#e0f2fe' : '#ffffff',
+              color: '#0284c7',
+              fontSize: 13,
+              fontWeight: 800,
+              cursor: 'pointer',
+            }}
+          >
+            📷 {showPhotoUploader ? 'Close Photo Loader' : '+ Load / Attach Photos'}
+          </button>
           <Link
             href="/cleaning-report"
             style={{
@@ -138,6 +215,23 @@ export default function CleaningEventDetailPage() {
           </button>
         </div>
       </div>
+
+      {toast && (
+        <div
+          style={{
+            background: toast.type === 'success' ? '#f0fdf4' : '#fef2f2',
+            border: `1px solid ${toast.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
+            color: toast.type === 'success' ? '#15803d' : '#dc2626',
+            padding: '13px 18px',
+            borderRadius: 10,
+            marginBottom: 18,
+            fontSize: 13.5,
+            fontWeight: 700,
+          }}
+        >
+          {toast.text}
+        </div>
+      )}
 
       {/* Report Document Card */}
       <div
@@ -225,10 +319,41 @@ export default function CleaningEventDetailPage() {
             </div>
           </div>
 
-          {/* Checklist Items */}
-          <h3 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', color: '#334155', marginBottom: 12 }}>
-            Completed Scope Checklist ({record.location})
-          </h3>
+          {/* Checklist Items (Interactive Tick / Untick Support) */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', color: '#334155', margin: 0 }}>
+              Completed Scope Checklist ({record.location})
+            </h3>
+            {checklistItems.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  disabled={savingChanges}
+                  onClick={() => {
+                    const allDone = checklistItems.map(item => ({ ...item, completed: true }));
+                    setChecklistItems(allDone);
+                    void handleSavePhotosAndTasks(beforePhotos, afterPhotos, allDone);
+                  }}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: 6,
+                    border: '1px solid #16a34a',
+                    background: '#f0fdf4',
+                    color: '#15803d',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  ⚡ Complete All Tasks
+                </button>
+                <span style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>
+                  (Tap any task row below to untick / tick)
+                </span>
+              </div>
+            )}
+          </div>
+
           <div
             style={{
               border: '1px solid #e2e8f0',
@@ -237,9 +362,9 @@ export default function CleaningEventDetailPage() {
               marginBottom: 24,
             }}
           >
-            {Array.isArray(record.checklist_items) && record.checklist_items.length > 0 ? (
-              record.checklist_items.map((item, idx) => (
-                <div
+            {checklistItems.length > 0 ? (
+              checklistItems.map((item, idx) => (
+                <label
                   key={idx}
                   style={{
                     padding: '11px 16px',
@@ -249,9 +374,26 @@ export default function CleaningEventDetailPage() {
                     alignItems: 'center',
                     gap: 12,
                     fontSize: 14,
+                    cursor: 'pointer',
+                    background: item.completed ? '#ffffff' : '#fff1f2',
                   }}
                 >
-                  <span style={{ color: '#0f172a', fontWeight: 600 }}>{item.label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <input
+                      type="checkbox"
+                      checked={item.completed}
+                      disabled={savingChanges}
+                      onChange={e => {
+                        const next = checklistItems.map((it, i) =>
+                          i === idx ? { ...it, completed: e.target.checked } : it
+                        );
+                        setChecklistItems(next);
+                        void handleSavePhotosAndTasks(beforePhotos, afterPhotos, next);
+                      }}
+                      style={{ width: 18, height: 18, accentColor: '#16a34a', cursor: 'pointer' }}
+                    />
+                    <span style={{ color: '#0f172a', fontWeight: 600 }}>{item.label}</span>
+                  </div>
                   <span
                     style={{
                       padding: '2px 10px',
@@ -263,9 +405,9 @@ export default function CleaningEventDetailPage() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {item.completed ? 'COMPLETED ✓' : 'INCOMPLETE'}
+                    {item.completed ? 'COMPLETED ✓' : 'NOT COMPLETED'}
                   </span>
-                </div>
+                </label>
               ))
             ) : (
               <div style={{ padding: 16, fontSize: 14, color: '#334155' }}>{record.items_cleaned}</div>
@@ -298,33 +440,113 @@ export default function CleaningEventDetailPage() {
             </div>
           )}
 
-          {/* Photos */}
-          {((record.before_photos && record.before_photos.length > 0) ||
-            (record.after_photos && record.after_photos.length > 0)) && (
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', color: '#334155', marginBottom: 10 }}>
-                Photographic Verification Evidence
+          {/* Photographic Verification Evidence (Always Visible + Direct Photo Loader) */}
+          <div
+            style={{
+              marginBottom: 24,
+              padding: 18,
+              borderRadius: 12,
+              border: '1px solid #cbd5e1',
+              background: '#f8fafc',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 10,
+                marginBottom: 12,
+              }}
+            >
+              <h3 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', color: '#0f3460', margin: 0 }}>
+                📷 Photographic Verification Evidence ({totalPhotosCount} Photo{totalPhotosCount === 1 ? '' : 's'})
               </h3>
+              <button
+                type="button"
+                onClick={() => setShowPhotoUploader(prev => !prev)}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: 8,
+                  border: '1px solid #0284c7',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  fontSize: 12.5,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                {showPhotoUploader ? 'Hide Photo Upload Controls' : '📷 + Load / Add Photos to Report'}
+              </button>
+            </div>
+
+            {(showPhotoUploader || totalPhotosCount === 0) && (
+              <div style={{ marginBottom: totalPhotosCount > 0 ? 16 : 0 }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                    gap: 14,
+                    marginBottom: 12,
+                  }}
+                >
+                  <PhotoCaptureControl
+                    label="Pre-Clean / Before Photos"
+                    photos={beforePhotos}
+                    onChange={next => {
+                      setBeforePhotos(next);
+                      void handleSavePhotosAndTasks(next, afterPhotos, checklistItems);
+                    }}
+                    uploadEndpoint="/api/cleaning-records/upload"
+                    disabled={savingChanges}
+                  />
+                  <PhotoCaptureControl
+                    label="Post-Clean / Verification Photos"
+                    photos={afterPhotos}
+                    onChange={next => {
+                      setAfterPhotos(next);
+                      void handleSavePhotosAndTasks(beforePhotos, next, checklistItems);
+                    }}
+                    uploadEndpoint="/api/cleaning-records/upload"
+                    disabled={savingChanges}
+                  />
+                </div>
+                {savingChanges && (
+                  <div style={{ fontSize: 12.5, fontWeight: 800, color: '#0284c7' }}>
+                    ⏳ Saving uploaded photos to report &amp; regenerating Daily Completion PDF...
+                  </div>
+                )}
+              </div>
+            )}
+
+            {totalPhotosCount > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-                {record.before_photos?.map((u, idx) => (
-                  <div key={`b-${idx}`} style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: 8 }}>
+                {beforePhotos.map((u, idx) => (
+                  <div key={`b-${idx}`} style={{ border: '1px solid #cbd5e1', borderRadius: 10, padding: 8, background: '#ffffff' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 6 }}>
                       PRE-CLEAN PHOTO #{idx + 1}
                     </div>
-                    <img src={u} alt="Before" style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 6 }} />
+                    <a href={u} target="_blank" rel="noopener noreferrer">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={u} alt="Before" style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 6, display: 'block' }} />
+                    </a>
                   </div>
                 ))}
-                {record.after_photos?.map((u, idx) => (
-                  <div key={`a-${idx}`} style={{ border: '1px solid #bbf7d0', borderRadius: 10, padding: 8 }}>
+                {afterPhotos.map((u, idx) => (
+                  <div key={`a-${idx}`} style={{ border: '1px solid #bbf7d0', borderRadius: 10, padding: 8, background: '#ffffff' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#15803d', marginBottom: 6 }}>
                       POST-CLEAN VERIFIED PHOTO #{idx + 1}
                     </div>
-                    <img src={u} alt="After" style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 6 }} />
+                    <a href={u} target="_blank" rel="noopener noreferrer">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={u} alt="After" style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 6, display: 'block' }} />
+                    </a>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Notes */}
           {record.comments && (

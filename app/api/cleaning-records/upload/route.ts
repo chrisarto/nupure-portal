@@ -2,21 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import crypto from 'crypto';
 
+function resolveImageMimeAndExt(rawMime: string, rawName: string): { mimeType: string; ext: string } {
+  const lowerExt = (rawName.split('.').pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (rawMime && rawMime.startsWith('image/')) {
+    if (rawMime.includes('png') || lowerExt === 'png') return { mimeType: 'image/png', ext: 'png' };
+    if (rawMime.includes('webp') || lowerExt === 'webp') return { mimeType: 'image/webp', ext: 'webp' };
+    if (rawMime.includes('gif') || lowerExt === 'gif') return { mimeType: 'image/gif', ext: 'gif' };
+    return { mimeType: 'image/jpeg', ext: 'jpg' };
+  }
+  if (lowerExt === 'png') return { mimeType: 'image/png', ext: 'png' };
+  if (lowerExt === 'webp') return { mimeType: 'image/webp', ext: 'webp' };
+  if (lowerExt === 'gif') return { mimeType: 'image/gif', ext: 'gif' };
+  return { mimeType: 'image/jpeg', ext: 'jpg' };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get('content-type') || '';
     let buffer: Buffer;
-    let mimeType = 'image/jpeg';
+    let rawMime = 'image/jpeg';
     let originalName = 'photo.jpg';
 
     if (contentType.includes('application/json')) {
       const body = (await request.json()) as { dataUrl?: string; filename?: string };
-      if (!body.dataUrl || !body.dataUrl.startsWith('data:image/')) {
+      if (!body.dataUrl || !body.dataUrl.startsWith('data:')) {
         return NextResponse.json({ error: 'Invalid dataUrl provided' }, { status: 400 });
       }
       const parts = body.dataUrl.split(',');
       const mimeMatch = parts[0]?.match(/:(.*?);/);
-      if (mimeMatch?.[1]) mimeType = mimeMatch[1];
+      if (mimeMatch?.[1]) rawMime = mimeMatch[1];
       buffer = Buffer.from(parts[1] || '', 'base64');
       originalName = body.filename || 'photo.jpg';
     } else {
@@ -27,11 +41,11 @@ export async function POST(request: NextRequest) {
       }
       const bytes = await file.arrayBuffer();
       buffer = Buffer.from(bytes);
-      mimeType = file.type || 'image/jpeg';
+      rawMime = file.type || 'image/jpeg';
       originalName = file.name || 'photo.jpg';
     }
 
-    const ext = (originalName.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '') || 'jpg';
+    const { mimeType, ext } = resolveImageMimeAndExt(rawMime, originalName);
     const filename = `room-clean/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`;
 
     const admin = createAdminClient();
